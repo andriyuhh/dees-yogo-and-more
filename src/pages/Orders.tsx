@@ -50,7 +50,7 @@ function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdA
             <div className="space-y-2 mt-1">
               {flavors.map(f => (
                 <div key={f.id} className="flex items-center justify-between bg-secondary rounded-lg px-3 py-2">
-                  <span className="text-sm font-medium">{f.emoji} {f.name} — ${f.pricePerUnit}</span>
+                  <span className="text-sm font-medium">{f.emoji} {f.name} — Le {f.pricePerUnit}</span>
                   <Input
                     type="number" min={0} className="w-16 h-8 text-center text-sm"
                     value={items[f.id] || ''}
@@ -117,7 +117,7 @@ export default function OrdersPage() {
               {order.items.map(i => `${i.quantity}x ${i.flavorName}`).join(', ')}
             </div>
             <div className="flex items-center justify-between">
-              <p className="font-extrabold text-lg">${order.totalAmount.toFixed(2)}</p>
+              <p className="font-extrabold text-lg">Le {order.totalAmount.toFixed(2)}</p>
               {order.status === 'pending' && (
                 <div className="flex gap-2">
                   <button

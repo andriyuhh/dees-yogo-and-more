@@ -1,5 +1,6 @@
 import { useYogurtStore } from '@/hooks/useYogurtStore';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, AlertTriangle } from 'lucide-react';
+import logo from '@/assets/logo.jpg';
 
 function MetricCard({ icon: Icon, label, value, subtitle, variant = 'default' }: {
   icon: React.ElementType;
@@ -41,23 +42,26 @@ export default function Dashboard() {
 
   return (
     <div className="px-4 pt-6">
-      <header className="mb-6">
-        <p className="text-sm text-muted-foreground font-medium">Welcome back 👋</p>
-        <h1 className="text-2xl font-extrabold text-foreground">Yogurt Tracker</h1>
+      <header className="mb-6 flex items-center gap-3">
+        <img src={logo} alt="Dee's Yogo & More" className="w-12 h-12 rounded-full object-cover shadow" />
+        <div>
+          <p className="text-sm text-muted-foreground font-medium">Welcome back 👋</p>
+          <h1 className="text-2xl font-extrabold text-foreground">Dee's Yogo & More</h1>
+        </div>
       </header>
 
       {/* Today highlight */}
       <div className="gradient-berry rounded-2xl p-5 mb-6 text-primary-foreground animate-fade-in shadow-lg">
         <p className="text-sm font-semibold opacity-80">Today's Revenue</p>
-        <p className="text-3xl font-extrabold mt-1">${todayRevenue.toFixed(2)}</p>
+        <p className="text-3xl font-extrabold mt-1">Le {todayRevenue.toFixed(2)}</p>
         <p className="text-xs mt-2 opacity-70">{todaySales.length} sale{todaySales.length !== 1 ? 's' : ''} today</p>
       </div>
 
       {/* Metrics grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <MetricCard icon={DollarSign} label="Total Sales" value={`$${totalSales.toFixed(2)}`} variant="default" />
-        <MetricCard icon={TrendingDown} label="Expenses" value={`$${totalExpenses.toFixed(2)}`} variant="default" />
-        <MetricCard icon={TrendingUp} label="Profit" value={`$${profit.toFixed(2)}`} variant="success" subtitle={profit >= 0 ? 'Looking good!' : 'Needs attention'} />
+        <MetricCard icon={DollarSign} label="Total Sales" value={`Le ${totalSales.toFixed(2)}`} variant="default" />
+        <MetricCard icon={TrendingDown} label="Expenses" value={`Le ${totalExpenses.toFixed(2)}`} variant="default" />
+        <MetricCard icon={TrendingUp} label="Profit" value={`Le ${profit.toFixed(2)}`} variant="success" subtitle={profit >= 0 ? 'Looking good!' : 'Needs attention'} />
         <MetricCard icon={ShoppingCart} label="Pending" value={`${pendingOrders.length}`} variant="berry" subtitle={`${orders.length} total orders`} />
       </div>
 
@@ -90,7 +94,7 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">{order.items.map(i => `${i.quantity}x ${i.flavorName}`).join(', ')}</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-sm">${order.totalAmount.toFixed(2)}</p>
+                <p className="font-bold text-sm">Le {order.totalAmount.toFixed(2)}</p>
                 <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                   order.status === 'pending' ? 'bg-warning/20 text-warning' :
                   order.status === 'completed' ? 'bg-success/20 text-success' :
