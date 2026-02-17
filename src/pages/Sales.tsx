@@ -29,7 +29,7 @@ function AddExpenseDialog({ onAdd }: { onAdd: (e: any) => void }) {
         <DialogHeader><DialogTitle>New Expense</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div><Label>Description</Label><Input value={desc} onChange={e => setDesc(e.target.value)} placeholder="What was it for?" /></div>
-          <div><Label>Amount ($)</Label><Input type="number" value={amount} onChange={e => setAmount(+e.target.value)} /></div>
+          <div><Label>Amount (Le)</Label><Input type="number" value={amount} onChange={e => setAmount(+e.target.value)} /></div>
           <div><Label>Category</Label>
             <div className="flex gap-2 flex-wrap mt-1">
               {['Ingredients', 'Packaging', 'Equipment', 'Other'].map(c => (
@@ -56,15 +56,15 @@ export default function SalesPage() {
       <div className="grid grid-cols-3 gap-2 mb-5">
         <div className="bg-card rounded-xl p-3 text-center shadow-sm">
           <p className="text-[10px] font-semibold text-muted-foreground uppercase">Revenue</p>
-          <p className="text-lg font-extrabold text-foreground">${totalSales.toFixed(0)}</p>
+          <p className="text-lg font-extrabold text-foreground">Le {totalSales.toFixed(0)}</p>
         </div>
         <div className="bg-card rounded-xl p-3 text-center shadow-sm">
           <p className="text-[10px] font-semibold text-muted-foreground uppercase">Expenses</p>
-          <p className="text-lg font-extrabold text-foreground">${totalExpenses.toFixed(0)}</p>
+          <p className="text-lg font-extrabold text-foreground">Le {totalExpenses.toFixed(0)}</p>
         </div>
         <div className="gradient-fresh rounded-xl p-3 text-center shadow-sm">
           <p className="text-[10px] font-semibold text-success-foreground/80 uppercase">Profit</p>
-          <p className="text-lg font-extrabold text-success-foreground">${profit.toFixed(0)}</p>
+          <p className="text-lg font-extrabold text-success-foreground">Le {profit.toFixed(0)}</p>
         </div>
       </div>
 
@@ -86,7 +86,7 @@ export default function SalesPage() {
                 <p className="text-sm font-semibold">{s.items.map(i => `${i.quantity}x ${i.flavorName}`).join(', ')}</p>
                 <p className="text-xs text-muted-foreground">{new Date(s.date).toLocaleDateString()}</p>
               </div>
-              <p className="font-extrabold text-success">${s.totalAmount.toFixed(2)}</p>
+              <p className="font-extrabold text-success">Le {s.totalAmount.toFixed(2)}</p>
             </div>
           ))}
           {sales.length === 0 && <p className="text-center text-muted-foreground py-8">No sales yet</p>}
@@ -99,7 +99,7 @@ export default function SalesPage() {
                 <p className="text-sm font-semibold">{e.description}</p>
                 <p className="text-xs text-muted-foreground">{e.category} · {new Date(e.date).toLocaleDateString()}</p>
               </div>
-              <p className="font-extrabold text-destructive">-${e.amount.toFixed(2)}</p>
+              <p className="font-extrabold text-destructive">-Le {e.amount.toFixed(2)}</p>
             </div>
           ))}
           {expenses.length === 0 && <p className="text-center text-muted-foreground py-8">No expenses yet</p>}

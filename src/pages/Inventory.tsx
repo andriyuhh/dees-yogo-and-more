@@ -36,8 +36,8 @@ function AddFlavorDialog({ onAdd }: { onAdd: (f: any) => void }) {
           </div>
           <div><Label>Initial Stock</Label><Input type="number" value={stock} onChange={e => setStock(+e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-2">
-            <div><Label>Cost/Unit ($)</Label><Input type="number" step="0.5" value={cost} onChange={e => setCost(+e.target.value)} /></div>
-            <div><Label>Price/Unit ($)</Label><Input type="number" step="0.5" value={price} onChange={e => setPrice(+e.target.value)} /></div>
+            <div><Label>Cost/Unit (Le)</Label><Input type="number" step="0.5" value={cost} onChange={e => setCost(+e.target.value)} /></div>
+            <div><Label>Price/Unit (Le)</Label><Input type="number" step="0.5" value={price} onChange={e => setPrice(+e.target.value)} /></div>
           </div>
           <Button onClick={handleSubmit} className="w-full gradient-berry text-primary-foreground">Add Flavor</Button>
         </div>
@@ -66,7 +66,7 @@ export default function InventoryPage() {
                   <span className="text-3xl">{f.emoji}</span>
                   <div>
                     <p className="font-bold">{f.name}</p>
-                    <p className="text-xs text-muted-foreground">${f.costPerUnit} cost · ${f.pricePerUnit} sell</p>
+                    <p className="text-xs text-muted-foreground">Le {f.costPerUnit} cost · Le {f.pricePerUnit} sell</p>
                   </div>
                 </div>
                 {isLow && (
