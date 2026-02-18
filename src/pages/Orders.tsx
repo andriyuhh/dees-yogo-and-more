@@ -1,18 +1,32 @@
 import { useState } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
-import { Plus, Phone, Check, X } from 'lucide-react';
+import { Plus, Phone, Check, X, MapPin, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import type { Order, OrderItem } from '@/types/yogurt';
 
 function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdAt'>) => void }) {
-  const { flavors } = useYogurtStore();
+  const { flavors, customers } = useYogurtStore();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [items, setItems] = useState<Record<string, number>>({});
+  const [notes, setNotes] = useState('');
+
+  // Auto-fill from existing customer
+  const handlePhoneChange = (value: string) => {
+    setPhone(value);
+    const existing = customers.find(c => c.phone === value);
+    if (existing) {
+      setName(existing.name);
+      if (existing.address) setAddress(existing.address);
+    }
+  };
 
   const handleSubmit = () => {
     const orderItems: OrderItem[] = Object.entries(items)
@@ -22,9 +36,18 @@ function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdA
         return { flavorId: id, flavorName: f.name, quantity: qty, unitPrice: f.pricePerUnit };
       });
     if (!name || orderItems.length === 0) return;
-    const total = orderItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-    onAdd({ customerName: name, customerPhone: phone, items: orderItems, status: 'pending', totalAmount: total, notes: '' });
-    setName(''); setPhone(''); setItems({}); setOpen(false);
+    const subtotal = orderItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+    onAdd({
+      customerName: name,
+      customerPhone: phone,
+      deliveryAddress: address || undefined,
+      deliveryFee,
+      items: orderItems,
+      status: 'pending',
+      totalAmount: subtotal + deliveryFee,
+      notes: notes || undefined,
+    });
+    setName(''); setPhone(''); setAddress(''); setDeliveryFee(0); setItems({}); setNotes(''); setOpen(false);
   };
 
   return (
@@ -34,16 +57,24 @@ function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdA
           <Plus className="h-4 w-4 mr-1" /> New Order
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-sm mx-auto">
+      <DialogContent className="max-w-sm mx-auto max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>New Order</DialogTitle></DialogHeader>
         <div className="space-y-3">
+          <div>
+            <Label>Phone</Label>
+            <Input value={phone} onChange={e => handlePhoneChange(e.target.value)} placeholder="Enter phone (auto-fills returning customers)" />
+          </div>
           <div>
             <Label>Customer Name</Label>
             <Input value={name} onChange={e => setName(e.target.value)} placeholder="Enter name" />
           </div>
           <div>
-            <Label>Phone</Label>
-            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Enter phone" />
+            <Label>Delivery Address</Label>
+            <Textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter delivery address (optional)" className="min-h-[60px]" />
+          </div>
+          <div>
+            <Label>Delivery Fee (Le)</Label>
+            <Input type="number" min={0} value={deliveryFee || ''} onChange={e => setDeliveryFee(parseFloat(e.target.value) || 0)} placeholder="0" />
           </div>
           <div>
             <Label>Items</Label>
@@ -58,7 +89,12 @@ function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdA
                   />
                 </div>
               ))}
+              {flavors.length === 0 && <p className="text-sm text-muted-foreground">Add flavors in Inventory first</p>}
             </div>
+          </div>
+          <div>
+            <Label>Notes (optional)</Label>
+            <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any special instructions" />
           </div>
           <Button onClick={handleSubmit} className="w-full gradient-berry text-primary-foreground">Create Order</Button>
         </div>
@@ -80,7 +116,6 @@ export default function OrdersPage() {
         <NewOrderDialog onAdd={addOrder} />
       </div>
 
-      {/* Filter tabs */}
       <div className="flex gap-2 mb-4">
         {(['all', 'pending', 'completed'] as const).map(f => (
           <button
@@ -104,6 +139,11 @@ export default function OrdersPage() {
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Phone className="h-3 w-3" /> {order.customerPhone}
                 </div>
+                {order.deliveryAddress && (
+                  <div className="flex items-start gap-1 text-xs text-muted-foreground mt-1">
+                    <MapPin className="h-3 w-3 mt-0.5 shrink-0" /> {order.deliveryAddress}
+                  </div>
+                )}
               </div>
               <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                 order.status === 'pending' ? 'bg-warning/20 text-warning' :
@@ -116,6 +156,14 @@ export default function OrdersPage() {
             <div className="text-sm text-muted-foreground mb-2">
               {order.items.map(i => `${i.quantity}x ${i.flavorName}`).join(', ')}
             </div>
+            {order.deliveryFee > 0 && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                <Truck className="h-3 w-3" /> Delivery: Le {order.deliveryFee.toFixed(2)}
+              </div>
+            )}
+            {order.notes && (
+              <p className="text-xs text-muted-foreground italic mb-2">📝 {order.notes}</p>
+            )}
             <div className="flex items-center justify-between">
               <p className="font-extrabold text-lg">Le {order.totalAmount.toFixed(2)}</p>
               {order.status === 'pending' && (
@@ -141,7 +189,7 @@ export default function OrdersPage() {
           </div>
         ))}
         {filtered.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">No orders found</p>
+          <p className="text-center text-muted-foreground py-8">No orders yet — tap "New Order" to get started!</p>
         )}
       </div>
     </div>
