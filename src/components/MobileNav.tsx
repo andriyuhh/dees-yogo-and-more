@@ -1,10 +1,12 @@
 import { NavLink as RouterNavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, TrendingUp, Users, Receipt } from 'lucide-react';
 
 const tabs = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/', icon: LayoutDashboard, label: 'Home' },
   { to: '/orders', icon: ShoppingCart, label: 'Orders' },
-  { to: '/inventory', icon: Package, label: 'Inventory' },
+  { to: '/inventory', icon: Package, label: 'Stock' },
+  { to: '/customers', icon: Users, label: 'CRM' },
+  { to: '/expenses', icon: Receipt, label: 'Expenses' },
   { to: '/sales', icon: TrendingUp, label: 'Sales' },
 ];
 
@@ -18,7 +20,7 @@ export default function MobileNav() {
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all duration-200 ${
+              `flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all duration-200 ${
                 isActive
                   ? 'text-primary scale-105'
                   : 'text-muted-foreground hover:text-foreground'
@@ -26,7 +28,7 @@ export default function MobileNav() {
             }
           >
             <Icon className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">{label}</span>
+            <span className="text-[9px] font-semibold">{label}</span>
           </RouterNavLink>
         ))}
       </div>

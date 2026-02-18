@@ -8,10 +8,21 @@ export interface YogurtFlavor {
   lowStockThreshold: number;
 }
 
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  address?: string;
+  notes?: string;
+  createdAt: string;
+}
+
 export interface Order {
   id: string;
   customerName: string;
   customerPhone: string;
+  deliveryAddress?: string;
+  deliveryFee: number;
   items: OrderItem[];
   status: 'pending' | 'completed' | 'cancelled';
   totalAmount: number;
@@ -40,4 +51,6 @@ export interface Expense {
   amount: number;
   date: string;
   category: string;
+  isRecurring?: boolean;
+  recurringFrequency?: 'daily' | 'weekly' | 'monthly';
 }

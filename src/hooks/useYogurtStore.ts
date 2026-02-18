@@ -1,52 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { YogurtFlavor, Order, Sale, Expense } from '@/types/yogurt';
+import type { YogurtFlavor, Order, Sale, Expense, Customer } from '@/types/yogurt';
 
 const STORAGE_KEYS = {
   flavors: 'yogurt-flavors',
   orders: 'yogurt-orders',
   sales: 'yogurt-sales',
   expenses: 'yogurt-expenses',
+  customers: 'yogurt-customers',
 };
-
-const defaultFlavors: YogurtFlavor[] = [
-  { id: '1', name: 'Strawberry', emoji: '🍓', stock: 50, costPerUnit: 2, pricePerUnit: 5, lowStockThreshold: 10 },
-  { id: '2', name: 'Blueberry', emoji: '🫐', stock: 35, costPerUnit: 2.5, pricePerUnit: 5.5, lowStockThreshold: 10 },
-  { id: '3', name: 'Mango', emoji: '🥭', stock: 40, costPerUnit: 2, pricePerUnit: 5, lowStockThreshold: 10 },
-  { id: '4', name: 'Vanilla', emoji: '🍦', stock: 60, costPerUnit: 1.5, pricePerUnit: 4.5, lowStockThreshold: 10 },
-  { id: '5', name: 'Greek Plain', emoji: '🥛', stock: 8, costPerUnit: 1.8, pricePerUnit: 4, lowStockThreshold: 10 },
-];
-
-const defaultOrders: Order[] = [
-  {
-    id: 'o1', customerName: 'Sarah M.', customerPhone: '555-1234',
-    items: [{ flavorId: '1', flavorName: 'Strawberry', quantity: 5, unitPrice: 5 }],
-    status: 'pending', totalAmount: 25, createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'o2', customerName: 'James K.', customerPhone: '555-5678',
-    items: [
-      { flavorId: '2', flavorName: 'Blueberry', quantity: 3, unitPrice: 5.5 },
-      { flavorId: '4', flavorName: 'Vanilla', quantity: 2, unitPrice: 4.5 },
-    ],
-    status: 'pending', totalAmount: 25.5, createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-];
-
-const defaultSales: Sale[] = [
-  {
-    id: 's1', items: [{ flavorId: '1', flavorName: 'Strawberry', quantity: 10, unitPrice: 5 }],
-    totalAmount: 50, date: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 's2', items: [{ flavorId: '3', flavorName: 'Mango', quantity: 8, unitPrice: 5 }],
-    totalAmount: 40, date: new Date(Date.now() - 172800000).toISOString(),
-  },
-];
-
-const defaultExpenses: Expense[] = [
-  { id: 'e1', description: 'Milk supply', amount: 120, date: new Date(Date.now() - 86400000).toISOString(), category: 'Ingredients' },
-  { id: 'e2', description: 'Cups & packaging', amount: 45, date: new Date(Date.now() - 172800000).toISOString(), category: 'Packaging' },
-];
 
 function load<T>(key: string, fallback: T): T {
   try {
@@ -62,15 +23,17 @@ function save<T>(key: string, data: T) {
 }
 
 export function useYogurtStore() {
-  const [flavors, setFlavors] = useState<YogurtFlavor[]>(() => load(STORAGE_KEYS.flavors, defaultFlavors));
-  const [orders, setOrders] = useState<Order[]>(() => load(STORAGE_KEYS.orders, defaultOrders));
-  const [sales, setSales] = useState<Sale[]>(() => load(STORAGE_KEYS.sales, defaultSales));
-  const [expenses, setExpenses] = useState<Expense[]>(() => load(STORAGE_KEYS.expenses, defaultExpenses));
+  const [flavors, setFlavors] = useState<YogurtFlavor[]>(() => load(STORAGE_KEYS.flavors, []));
+  const [orders, setOrders] = useState<Order[]>(() => load(STORAGE_KEYS.orders, []));
+  const [sales, setSales] = useState<Sale[]>(() => load(STORAGE_KEYS.sales, []));
+  const [expenses, setExpenses] = useState<Expense[]>(() => load(STORAGE_KEYS.expenses, []));
+  const [customers, setCustomers] = useState<Customer[]>(() => load(STORAGE_KEYS.customers, []));
 
   useEffect(() => save(STORAGE_KEYS.flavors, flavors), [flavors]);
   useEffect(() => save(STORAGE_KEYS.orders, orders), [orders]);
   useEffect(() => save(STORAGE_KEYS.sales, sales), [sales]);
   useEffect(() => save(STORAGE_KEYS.expenses, expenses), [expenses]);
+  useEffect(() => save(STORAGE_KEYS.customers, customers), [customers]);
 
   const totalSales = sales.reduce((sum, s) => sum + s.totalAmount, 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -78,10 +41,35 @@ export function useYogurtStore() {
   const pendingOrders = orders.filter(o => o.status === 'pending');
   const lowStockFlavors = flavors.filter(f => f.stock <= f.lowStockThreshold);
 
+  // Auto-save customer from order
+  const upsertCustomer = useCallback((name: string, phone: string, address?: string) => {
+    setCustomers(prev => {
+      const existing = prev.find(c => c.phone === phone);
+      if (existing) {
+        return prev.map(c => c.phone === phone ? { ...c, name, address: address || c.address } : c);
+      }
+      return [...prev, { id: `c${Date.now()}`, name, phone, address, createdAt: new Date().toISOString() }];
+    });
+  }, []);
+
+  const updateCustomer = useCallback((id: string, updates: Partial<Customer>) => {
+    setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  }, []);
+
+  const deleteCustomer = useCallback((id: string) => {
+    setCustomers(prev => prev.filter(c => c.id !== id));
+  }, []);
+
+  const getCustomerOrders = useCallback((phone: string) => {
+    return orders.filter(o => o.customerPhone === phone);
+  }, [orders]);
+
   const addOrder = useCallback((order: Omit<Order, 'id' | 'createdAt'>) => {
     const newOrder: Order = { ...order, id: `o${Date.now()}`, createdAt: new Date().toISOString() };
     setOrders(prev => [newOrder, ...prev]);
-  }, []);
+    // Auto-save customer
+    upsertCustomer(order.customerName, order.customerPhone, order.deliveryAddress);
+  }, [upsertCustomer]);
 
   const updateOrderStatus = useCallback((id: string, status: Order['status']) => {
     setOrders(prev => prev.map(o => {
@@ -118,9 +106,15 @@ export function useYogurtStore() {
     setExpenses(prev => [{ ...expense, id: `e${Date.now()}` }, ...prev]);
   }, []);
 
+  const deleteExpense = useCallback((id: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
+  }, []);
+
   return {
-    flavors, orders, sales, expenses,
+    flavors, orders, sales, expenses, customers,
     totalSales, totalExpenses, profit, pendingOrders, lowStockFlavors,
-    addOrder, updateOrderStatus, addSale, updateStock, addFlavor, addExpense,
+    addOrder, updateOrderStatus, addSale, updateStock, addFlavor,
+    addExpense, deleteExpense,
+    upsertCustomer, updateCustomer, deleteCustomer, getCustomerOrders,
   };
 }

@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import Orders from "./pages/Orders";
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
+import Customers from "./pages/Customers";
+import Expenses from "./pages/Expenses";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
 
@@ -31,6 +33,8 @@ const App = () => {
               <Route path="/orders" element={<Orders />} />
               <Route path="/inventory" element={<Inventory />} />
               <Route path="/sales" element={<Sales />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/expenses" element={<Expenses />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
