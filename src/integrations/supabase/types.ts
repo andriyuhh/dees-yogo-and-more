@@ -14,7 +14,182 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          date: string
+          description: string
+          id: string
+          is_recurring: boolean
+          recurring_frequency: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          date?: string
+          description: string
+          id?: string
+          is_recurring?: boolean
+          recurring_frequency?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          date?: string
+          description?: string
+          id?: string
+          is_recurring?: boolean
+          recurring_frequency?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flavors: {
+        Row: {
+          cost_per_unit: number
+          created_at: string
+          emoji: string
+          id: string
+          low_stock_threshold: number
+          name: string
+          price_per_unit: number
+          stock: number
+          user_id: string
+        }
+        Insert: {
+          cost_per_unit?: number
+          created_at?: string
+          emoji?: string
+          id?: string
+          low_stock_threshold?: number
+          name: string
+          price_per_unit?: number
+          stock?: number
+          user_id: string
+        }
+        Update: {
+          cost_per_unit?: number
+          created_at?: string
+          emoji?: string
+          id?: string
+          low_stock_threshold?: number
+          name?: string
+          price_per_unit?: number
+          stock?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivery_address: string | null
+          delivery_fee: number
+          id: string
+          items: Json
+          notes: string | null
+          status: string
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          customer_phone?: string
+          delivery_address?: string | null
+          delivery_fee?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          status?: string
+          total_amount?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string
+          delivery_address?: string | null
+          delivery_fee?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          status?: string
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          date: string
+          id: string
+          items: Json
+          order_id: string | null
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          id?: string
+          items?: Json
+          order_id?: string | null
+          total_amount?: number
+          user_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          items?: Json
+          order_id?: string | null
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

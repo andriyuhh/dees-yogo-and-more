@@ -18,7 +18,6 @@ function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdA
   const [items, setItems] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
 
-  // Auto-fill from existing customer
   const handlePhoneChange = (value: string) => {
     setPhone(value);
     const existing = customers.find(c => c.phone === value);
@@ -53,34 +52,34 @@ function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdA
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gradient-berry text-primary-foreground rounded-full shadow-lg" size="sm">
+        <Button className="gradient-berry text-primary-foreground rounded-full shadow-lg hover-lift" size="sm">
           <Plus className="h-4 w-4 mr-1" /> New Order
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-sm mx-auto max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>New Order</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>New Order 🛒</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div>
+          <div className="animate-fade-in stagger-1">
             <Label>Phone</Label>
-            <Input value={phone} onChange={e => handlePhoneChange(e.target.value)} placeholder="Enter phone (auto-fills returning customers)" />
+            <Input value={phone} onChange={e => handlePhoneChange(e.target.value)} placeholder="Auto-fills returning customers ✨" />
           </div>
-          <div>
+          <div className="animate-fade-in stagger-2">
             <Label>Customer Name</Label>
             <Input value={name} onChange={e => setName(e.target.value)} placeholder="Enter name" />
           </div>
-          <div>
-            <Label>Delivery Address</Label>
+          <div className="animate-fade-in stagger-3">
+            <Label>📍 Delivery Address</Label>
             <Textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Enter delivery address (optional)" className="min-h-[60px]" />
           </div>
-          <div>
-            <Label>Delivery Fee (Le)</Label>
+          <div className="animate-fade-in stagger-4">
+            <Label>🚗 Delivery Fee (Le)</Label>
             <Input type="number" min={0} value={deliveryFee || ''} onChange={e => setDeliveryFee(parseFloat(e.target.value) || 0)} placeholder="0" />
           </div>
-          <div>
+          <div className="animate-fade-in stagger-5">
             <Label>Items</Label>
             <div className="space-y-2 mt-1">
               {flavors.map(f => (
-                <div key={f.id} className="flex items-center justify-between bg-secondary rounded-lg px-3 py-2">
+                <div key={f.id} className="flex items-center justify-between bg-secondary rounded-xl px-3 py-2 hover-lift">
                   <span className="text-sm font-medium">{f.emoji} {f.name} — Le {f.pricePerUnit}</span>
                   <Input
                     type="number" min={0} className="w-16 h-8 text-center text-sm"
@@ -89,14 +88,14 @@ function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdA
                   />
                 </div>
               ))}
-              {flavors.length === 0 && <p className="text-sm text-muted-foreground">Add flavors in Inventory first</p>}
+              {flavors.length === 0 && <p className="text-sm text-muted-foreground">Add flavors in Inventory first 🍨</p>}
             </div>
           </div>
-          <div>
+          <div className="animate-fade-in stagger-6">
             <Label>Notes (optional)</Label>
             <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any special instructions" />
           </div>
-          <Button onClick={handleSubmit} className="w-full gradient-berry text-primary-foreground">Create Order</Button>
+          <Button onClick={handleSubmit} className="w-full gradient-berry text-primary-foreground rounded-xl shadow-md hover:shadow-lg transition-shadow">Create Order ✨</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -104,35 +103,43 @@ function NewOrderDialog({ onAdd }: { onAdd: (order: Omit<Order, 'id' | 'createdA
 }
 
 export default function OrdersPage() {
-  const { orders, addOrder, updateOrderStatus } = useYogurtStore();
+  const { orders, addOrder, updateOrderStatus, loading } = useYogurtStore();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
 
+  if (loading) {
+    return (
+      <div className="px-4 pt-6 space-y-3">
+        {[1, 2, 3].map(i => <div key={i} className="h-28 bg-muted rounded-2xl animate-pulse" />)}
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 pt-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-extrabold">Orders</h1>
+      <div className="flex items-center justify-between mb-4 animate-fade-in">
+        <h1 className="text-2xl font-extrabold">Orders 📋</h1>
         <NewOrderDialog onAdd={addOrder} />
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 animate-slide-up">
         {(['all', 'pending', 'completed'] as const).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all ${
-              filter === f ? 'gradient-berry text-primary-foreground shadow' : 'bg-secondary text-secondary-foreground'
+            className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all duration-200 ${
+              filter === f ? 'gradient-berry text-primary-foreground shadow-md scale-105' : 'bg-secondary text-secondary-foreground hover:scale-105'
             }`}
           >
-            {f}
+            {f === 'pending' ? '⏳ ' : f === 'completed' ? '✅ ' : ''}{f}
           </button>
         ))}
       </div>
 
       <div className="space-y-3">
-        {filtered.map(order => (
-          <div key={order.id} className="bg-card rounded-xl p-4 shadow-sm animate-fade-in">
+        {filtered.map((order, i) => (
+          <div key={order.id} className="card-playful animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
             <div className="flex items-start justify-between mb-2">
               <div>
                 <p className="font-bold">{order.customerName}</p>
@@ -150,7 +157,7 @@ export default function OrdersPage() {
                 order.status === 'completed' ? 'bg-success/20 text-success' :
                 'bg-destructive/20 text-destructive'
               }`}>
-                {order.status}
+                {order.status === 'pending' ? '⏳' : order.status === 'completed' ? '✅' : '❌'} {order.status}
               </span>
             </div>
             <div className="text-sm text-muted-foreground mb-2">
@@ -170,13 +177,13 @@ export default function OrdersPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => updateOrderStatus(order.id, 'completed')}
-                    className="h-8 w-8 rounded-full bg-success/20 text-success flex items-center justify-center hover:bg-success/30 transition-colors"
+                    className="h-9 w-9 rounded-full bg-success/20 text-success flex items-center justify-center hover:bg-success/30 hover:scale-110 transition-all"
                   >
                     <Check className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                    className="h-8 w-8 rounded-full bg-destructive/20 text-destructive flex items-center justify-center hover:bg-destructive/30 transition-colors"
+                    className="h-9 w-9 rounded-full bg-destructive/20 text-destructive flex items-center justify-center hover:bg-destructive/30 hover:scale-110 transition-all"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -189,7 +196,10 @@ export default function OrdersPage() {
           </div>
         ))}
         {filtered.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">No orders yet — tap "New Order" to get started!</p>
+          <div className="text-center py-12 animate-bounce-in">
+            <p className="text-5xl mb-3">📦</p>
+            <p className="text-muted-foreground font-medium">No orders yet — tap "New Order" to get started!</p>
+          </div>
         )}
       </div>
     </div>

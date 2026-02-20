@@ -111,9 +111,24 @@
   .gradient-warm {
     background: linear-gradient(135deg, hsl(35 60% 95%), hsl(30 50% 97%));
   }
+  .gradient-sunset {
+    background: linear-gradient(135deg, hsl(38 92% 55%), hsl(350 80% 65%));
+  }
   .text-gradient-berry {
     background: linear-gradient(135deg, hsl(340 65% 55%), hsl(350 80% 65%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+  .hover-lift {
+    @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-md;
+  }
+  .card-playful {
+    @apply bg-card rounded-2xl p-4 shadow-sm border border-border/50 transition-all duration-200 hover:shadow-md;
+  }
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
 }
