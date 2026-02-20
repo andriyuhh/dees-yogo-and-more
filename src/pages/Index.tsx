@@ -1,18 +1,20 @@
 import { useYogurtStore } from '@/hooks/useYogurtStore';
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, AlertTriangle, LogOut } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 
-function MetricCard({ icon: Icon, label, value, subtitle, variant = 'default' }: {
+function MetricCard({ icon: Icon, label, value, subtitle, variant = 'default', delay = 0 }: {
   icon: React.ElementType;
   label: string;
   value: string;
   subtitle?: string;
   variant?: 'default' | 'success' | 'warning' | 'berry';
+  delay?: number;
 }) {
   const bgMap = {
-    default: 'bg-card',
+    default: 'bg-card border border-border/50',
     success: 'gradient-fresh',
-    warning: 'bg-warning',
+    warning: 'gradient-sunset',
     berry: 'gradient-berry',
   };
   const textMap = {
@@ -23,10 +25,13 @@ function MetricCard({ icon: Icon, label, value, subtitle, variant = 'default' }:
   };
 
   return (
-    <div className={`rounded-xl p-4 ${bgMap[variant]} ${variant !== 'default' ? textMap[variant] : ''} animate-fade-in shadow-sm`}>
+    <div
+      className={`rounded-2xl p-4 ${bgMap[variant]} ${variant !== 'default' ? textMap[variant] : ''} animate-slide-up hover-lift shadow-sm`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <div className="flex items-center justify-between mb-2">
         <Icon className="h-5 w-5 opacity-80" />
-        <span className={`text-xs font-semibold uppercase tracking-wide opacity-70`}>{label}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide opacity-70">{label}</span>
       </div>
       <p className="text-2xl font-extrabold">{value}</p>
       {subtitle && <p className="text-xs mt-1 opacity-70">{subtitle}</p>}
@@ -35,23 +40,50 @@ function MetricCard({ icon: Icon, label, value, subtitle, variant = 'default' }:
 }
 
 export default function Dashboard() {
-  const { totalSales, totalExpenses, profit, pendingOrders, lowStockFlavors, sales, orders } = useYogurtStore();
+  const { totalSales, totalExpenses, profit, pendingOrders, lowStockFlavors, sales, orders, loading } = useYogurtStore();
+  const { signOut } = useAuth();
 
   const todaySales = sales.filter(s => new Date(s.date).toDateString() === new Date().toDateString());
   const todayRevenue = todaySales.reduce((sum, s) => sum + s.totalAmount, 0);
 
-  return (
-    <div className="px-4 pt-6">
-      <header className="mb-6 flex items-center gap-3">
-        <img src={logo} alt="Dee's Yogo & More" className="w-12 h-12 rounded-full object-cover shadow" />
-        <div>
-          <p className="text-sm text-muted-foreground font-medium">Welcome back 👋</p>
-          <h1 className="text-2xl font-extrabold text-foreground">Dee's Yogo & More</h1>
+  if (loading) {
+    return (
+      <div className="px-4 pt-6 space-y-4">
+        <div className="h-16 bg-muted rounded-2xl animate-pulse" />
+        <div className="h-32 bg-muted rounded-2xl animate-pulse" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-24 bg-muted rounded-2xl animate-pulse" />
+          <div className="h-24 bg-muted rounded-2xl animate-pulse" />
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pt-6 pb-4">
+      <header className="mb-6 flex items-center justify-between animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="absolute -inset-1 gradient-berry rounded-full blur opacity-30 animate-pulse" />
+            <img src={logo} alt="Dee's Yogo & More" className="w-12 h-12 rounded-full object-cover shadow-lg relative" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground font-medium">Welcome back 👋</p>
+            <h1 className="text-xl font-extrabold text-foreground">Dee's Yogo & More</h1>
+          </div>
+        </div>
+        <button
+          onClick={signOut}
+          className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+          title="Sign out"
+        >
+          <LogOut className="h-4 w-4 text-muted-foreground" />
+        </button>
       </header>
 
       {/* Today highlight */}
-      <div className="gradient-berry rounded-2xl p-5 mb-6 text-primary-foreground animate-fade-in shadow-lg">
+      <div className="gradient-berry rounded-2xl p-5 mb-6 text-primary-foreground animate-bounce-in shadow-lg relative overflow-hidden">
+        <div className="absolute top-2 right-4 text-4xl opacity-20 animate-float">🍦</div>
         <p className="text-sm font-semibold opacity-80">Today's Revenue</p>
         <p className="text-3xl font-extrabold mt-1">Le {todayRevenue.toFixed(2)}</p>
         <p className="text-xs mt-2 opacity-70">{todaySales.length} sale{todaySales.length !== 1 ? 's' : ''} today</p>
@@ -59,17 +91,17 @@ export default function Dashboard() {
 
       {/* Metrics grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <MetricCard icon={DollarSign} label="Total Sales" value={`Le ${totalSales.toFixed(2)}`} variant="default" />
-        <MetricCard icon={TrendingDown} label="Expenses" value={`Le ${totalExpenses.toFixed(2)}`} variant="default" />
-        <MetricCard icon={TrendingUp} label="Profit" value={`Le ${profit.toFixed(2)}`} variant="success" subtitle={profit >= 0 ? 'Looking good!' : 'Needs attention'} />
-        <MetricCard icon={ShoppingCart} label="Pending" value={`${pendingOrders.length}`} variant="berry" subtitle={`${orders.length} total orders`} />
+        <MetricCard icon={DollarSign} label="Total Sales" value={`Le ${totalSales.toFixed(0)}`} delay={50} />
+        <MetricCard icon={TrendingDown} label="Expenses" value={`Le ${totalExpenses.toFixed(0)}`} delay={100} />
+        <MetricCard icon={TrendingUp} label="Profit" value={`Le ${profit.toFixed(0)}`} variant="success" subtitle={profit >= 0 ? '🎉 Looking good!' : '⚠️ Needs attention'} delay={150} />
+        <MetricCard icon={ShoppingCart} label="Pending" value={`${pendingOrders.length}`} variant="berry" subtitle={`${orders.length} total orders`} delay={200} />
       </div>
 
       {/* Stock alerts */}
       {lowStockFlavors.length > 0 && (
-        <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 animate-fade-in">
+        <div className="bg-warning/10 border border-warning/30 rounded-2xl p-4 animate-slide-up mb-6" style={{ animationDelay: '250ms' }}>
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertTriangle className="h-4 w-4 text-warning animate-wiggle" />
             <span className="text-sm font-bold text-warning">Low Stock Alert</span>
           </div>
           <div className="space-y-1.5">
@@ -84,11 +116,11 @@ export default function Dashboard() {
       )}
 
       {/* Recent orders */}
-      <div className="mt-6 mb-4">
+      <div className="animate-slide-up" style={{ animationDelay: '300ms' }}>
         <h2 className="text-lg font-bold mb-3">Recent Orders</h2>
         <div className="space-y-2">
-          {orders.slice(0, 3).map(order => (
-            <div key={order.id} className="bg-card rounded-xl p-3 flex items-center justify-between shadow-sm animate-fade-in">
+          {orders.slice(0, 3).map((order, i) => (
+            <div key={order.id} className={`card-playful flex items-center justify-between animate-fade-in stagger-${i + 1}`}>
               <div>
                 <p className="font-semibold text-sm">{order.customerName}</p>
                 <p className="text-xs text-muted-foreground">{order.items.map(i => `${i.quantity}x ${i.flavorName}`).join(', ')}</p>
@@ -105,6 +137,12 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
+          {orders.length === 0 && (
+            <div className="text-center py-8 animate-bounce-in">
+              <p className="text-4xl mb-2">🍨</p>
+              <p className="text-muted-foreground">No orders yet — let's get started!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -17,29 +17,29 @@ function AddFlavorDialog({ onAdd }: { onAdd: (f: any) => void }) {
   const handleSubmit = () => {
     if (!name) return;
     onAdd({ name, emoji, stock, costPerUnit: cost, pricePerUnit: price, lowStockThreshold: 10 });
-    setName(''); setOpen(false);
+    setName(''); setEmoji('🍨'); setStock(0); setCost(0); setPrice(0); setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gradient-berry text-primary-foreground rounded-full shadow-lg" size="sm">
+        <Button className="gradient-berry text-primary-foreground rounded-full shadow-lg hover-lift" size="sm">
           <PackagePlus className="h-4 w-4 mr-1" /> Add Flavor
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-sm mx-auto">
-        <DialogHeader><DialogTitle>New Flavor</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>New Flavor 🍦</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-4 gap-2">
-            <div><Label>Emoji</Label><Input value={emoji} onChange={e => setEmoji(e.target.value)} className="text-center text-xl" /></div>
-            <div className="col-span-3"><Label>Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Flavor name" /></div>
+            <div className="animate-fade-in"><Label>Emoji</Label><Input value={emoji} onChange={e => setEmoji(e.target.value)} className="text-center text-xl" /></div>
+            <div className="col-span-3 animate-fade-in stagger-1"><Label>Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Flavor name" /></div>
           </div>
-          <div><Label>Initial Stock</Label><Input type="number" value={stock} onChange={e => setStock(+e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><Label>Cost/Unit (Le)</Label><Input type="number" step="0.5" value={cost} onChange={e => setCost(+e.target.value)} /></div>
-            <div><Label>Price/Unit (Le)</Label><Input type="number" step="0.5" value={price} onChange={e => setPrice(+e.target.value)} /></div>
+          <div className="animate-fade-in stagger-2"><Label>Initial Stock</Label><Input type="number" value={stock || ''} onChange={e => setStock(+e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-2 animate-fade-in stagger-3">
+            <div><Label>Cost/Unit (Le)</Label><Input type="number" step="0.5" value={cost || ''} onChange={e => setCost(+e.target.value)} /></div>
+            <div><Label>Price/Unit (Le)</Label><Input type="number" step="0.5" value={price || ''} onChange={e => setPrice(+e.target.value)} /></div>
           </div>
-          <Button onClick={handleSubmit} className="w-full gradient-berry text-primary-foreground">Add Flavor</Button>
+          <Button onClick={handleSubmit} className="w-full gradient-berry text-primary-foreground rounded-xl shadow-md">Add Flavor ✨</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -47,30 +47,38 @@ function AddFlavorDialog({ onAdd }: { onAdd: (f: any) => void }) {
 }
 
 export default function InventoryPage() {
-  const { flavors, updateStock, addFlavor } = useYogurtStore();
+  const { flavors, updateStock, addFlavor, loading } = useYogurtStore();
+
+  if (loading) {
+    return (
+      <div className="px-4 pt-6 space-y-3">
+        {[1, 2, 3].map(i => <div key={i} className="h-24 bg-muted rounded-2xl animate-pulse" />)}
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pt-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-extrabold">Inventory</h1>
+      <div className="flex items-center justify-between mb-4 animate-fade-in">
+        <h1 className="text-2xl font-extrabold">Inventory 📦</h1>
         <AddFlavorDialog onAdd={addFlavor} />
       </div>
 
       <div className="space-y-3">
-        {flavors.map(f => {
+        {flavors.map((f, i) => {
           const isLow = f.stock <= f.lowStockThreshold;
           return (
-            <div key={f.id} className="bg-card rounded-xl p-4 shadow-sm animate-fade-in">
+            <div key={f.id} className="card-playful animate-slide-up" style={{ animationDelay: `${i * 60}ms` }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">{f.emoji}</span>
+                  <span className="text-3xl animate-float" style={{ animationDelay: `${i * 200}ms` }}>{f.emoji}</span>
                   <div>
                     <p className="font-bold">{f.name}</p>
                     <p className="text-xs text-muted-foreground">Le {f.costPerUnit} cost · Le {f.pricePerUnit} sell</p>
                   </div>
                 </div>
                 {isLow && (
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-warning/20 text-warning">Low</span>
+                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-warning/20 text-warning animate-wiggle">⚠️ Low</span>
                 )}
               </div>
 
@@ -78,7 +86,7 @@ export default function InventoryPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => updateStock(f.id, Math.max(0, f.stock - 1))}
-                    className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+                    className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 hover:scale-110 active:scale-95 transition-all"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
@@ -87,7 +95,7 @@ export default function InventoryPage() {
                   </span>
                   <button
                     onClick={() => updateStock(f.id, f.stock + 1)}
-                    className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+                    className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 hover:scale-110 active:scale-95 transition-all"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -97,6 +105,12 @@ export default function InventoryPage() {
             </div>
           );
         })}
+        {flavors.length === 0 && (
+          <div className="text-center py-12 animate-bounce-in">
+            <p className="text-5xl mb-3">🍨</p>
+            <p className="text-muted-foreground font-medium">No flavors yet — add your first one!</p>
+          </div>
+        )}
       </div>
     </div>
   );

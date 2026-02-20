@@ -4,7 +4,7 @@ import { Users, Phone, MapPin, ShoppingCart, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 export default function CustomersPage() {
-  const { customers, getCustomerOrders } = useYogurtStore();
+  const { customers, getCustomerOrders, loading } = useYogurtStore();
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -16,22 +16,30 @@ export default function CustomersPage() {
   const selectedCustomer = customers.find(c => c.id === selectedId);
   const customerOrders = selectedCustomer ? getCustomerOrders(selectedCustomer.phone) : [];
 
+  if (loading) {
+    return (
+      <div className="px-4 pt-6 space-y-3">
+        {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted rounded-2xl animate-pulse" />)}
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 pt-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-extrabold">Customers</h1>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+      <div className="flex items-center justify-between mb-4 animate-fade-in">
+        <h1 className="text-2xl font-extrabold">Customers 👥</h1>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground bg-secondary px-3 py-1 rounded-full">
           <Users className="h-4 w-4" /> {customers.length}
         </div>
       </div>
 
-      <div className="relative mb-4">
+      <div className="relative mb-4 animate-slide-up">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search by name or phone..."
-          className="pl-9"
+          placeholder="Search by name or phone... 🔍"
+          className="pl-9 rounded-xl"
         />
       </div>
 
@@ -43,7 +51,7 @@ export default function CustomersPage() {
           >
             ← Back to list
           </button>
-          <div className="bg-card rounded-xl p-4 shadow-sm mb-4">
+          <div className="card-playful mb-4 animate-scale-in">
             <h2 className="text-xl font-extrabold">{selectedCustomer.name}</h2>
             <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
               <Phone className="h-3 w-3" /> {selectedCustomer.phone}
@@ -62,8 +70,8 @@ export default function CustomersPage() {
             <ShoppingCart className="h-4 w-4" /> Order History ({customerOrders.length})
           </h3>
           <div className="space-y-2">
-            {customerOrders.map(order => (
-              <div key={order.id} className="bg-card rounded-xl p-3 shadow-sm">
+            {customerOrders.map((order, i) => (
+              <div key={order.id} className="card-playful animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-semibold">{order.items.map(i => `${i.quantity}x ${i.flavorName}`).join(', ')}</p>
                   <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
@@ -85,13 +93,14 @@ export default function CustomersPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map(c => {
+          {filtered.map((c, i) => {
             const orderCount = getCustomerOrders(c.phone).length;
             return (
               <button
                 key={c.id}
                 onClick={() => setSelectedId(c.id)}
-                className="w-full bg-card rounded-xl p-4 shadow-sm text-left hover:ring-2 hover:ring-primary/20 transition-all animate-fade-in"
+                className="w-full card-playful text-left animate-slide-up"
+                style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -108,9 +117,12 @@ export default function CustomersPage() {
             );
           })}
           {filtered.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">
-              {customers.length === 0 ? 'No customers yet — they\'ll appear here when you create orders!' : 'No results found'}
-            </p>
+            <div className="text-center py-12 animate-bounce-in">
+              <p className="text-5xl mb-3">👥</p>
+              <p className="text-muted-foreground font-medium">
+                {customers.length === 0 ? "No customers yet — they'll appear when you create orders!" : 'No results found'}
+              </p>
+            </div>
           )}
         </div>
       )}

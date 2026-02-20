@@ -1,39 +1,53 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { YogurtFlavor, Order, Sale, Expense, Customer } from '@/types/yogurt';
-
-const STORAGE_KEYS = {
-  flavors: 'yogurt-flavors',
-  orders: 'yogurt-orders',
-  sales: 'yogurt-sales',
-  expenses: 'yogurt-expenses',
-  customers: 'yogurt-customers',
-};
-
-function load<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function save<T>(key: string, data: T) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import type { YogurtFlavor, Order, Sale, Expense, Customer, OrderItem } from '@/types/yogurt';
 
 export function useYogurtStore() {
-  const [flavors, setFlavors] = useState<YogurtFlavor[]>(() => load(STORAGE_KEYS.flavors, []));
-  const [orders, setOrders] = useState<Order[]>(() => load(STORAGE_KEYS.orders, []));
-  const [sales, setSales] = useState<Sale[]>(() => load(STORAGE_KEYS.sales, []));
-  const [expenses, setExpenses] = useState<Expense[]>(() => load(STORAGE_KEYS.expenses, []));
-  const [customers, setCustomers] = useState<Customer[]>(() => load(STORAGE_KEYS.customers, []));
+  const { user } = useAuth();
+  const [flavors, setFlavors] = useState<YogurtFlavor[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => save(STORAGE_KEYS.flavors, flavors), [flavors]);
-  useEffect(() => save(STORAGE_KEYS.orders, orders), [orders]);
-  useEffect(() => save(STORAGE_KEYS.sales, sales), [sales]);
-  useEffect(() => save(STORAGE_KEYS.expenses, expenses), [expenses]);
-  useEffect(() => save(STORAGE_KEYS.customers, customers), [customers]);
+  // Fetch all data on mount
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    Promise.all([
+      supabase.from('flavors').select('*').order('created_at', { ascending: true }),
+      supabase.from('orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('sales').select('*').order('date', { ascending: false }),
+      supabase.from('expenses').select('*').order('date', { ascending: false }),
+      supabase.from('customers').select('*').order('created_at', { ascending: true }),
+    ]).then(([fRes, oRes, sRes, eRes, cRes]) => {
+      if (fRes.data) setFlavors(fRes.data.map(mapFlavor));
+      if (oRes.data) setOrders(oRes.data.map(mapOrder));
+      if (sRes.data) setSales(sRes.data.map(mapSale));
+      if (eRes.data) setExpenses(eRes.data.map(mapExpense));
+      if (cRes.data) setCustomers(cRes.data.map(mapCustomer));
+      setLoading(false);
+    });
+  }, [user]);
+
+  // Mappers from DB row to app types
+  function mapFlavor(r: any): YogurtFlavor {
+    return { id: r.id, name: r.name, emoji: r.emoji, stock: r.stock, costPerUnit: Number(r.cost_per_unit), pricePerUnit: Number(r.price_per_unit), lowStockThreshold: r.low_stock_threshold };
+  }
+  function mapOrder(r: any): Order {
+    return { id: r.id, customerName: r.customer_name, customerPhone: r.customer_phone, deliveryAddress: r.delivery_address, deliveryFee: Number(r.delivery_fee), items: r.items as OrderItem[], status: r.status, totalAmount: Number(r.total_amount), createdAt: r.created_at, notes: r.notes };
+  }
+  function mapSale(r: any): Sale {
+    return { id: r.id, orderId: r.order_id, items: r.items as OrderItem[], totalAmount: Number(r.total_amount), date: r.date };
+  }
+  function mapExpense(r: any): Expense {
+    return { id: r.id, description: r.description, amount: Number(r.amount), date: r.date, category: r.category, isRecurring: r.is_recurring, recurringFrequency: r.recurring_frequency };
+  }
+  function mapCustomer(r: any): Customer {
+    return { id: r.id, name: r.name, phone: r.phone, address: r.address, notes: r.notes, createdAt: r.created_at };
+  }
 
   const totalSales = sales.reduce((sum, s) => sum + s.totalAmount, 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -41,22 +55,30 @@ export function useYogurtStore() {
   const pendingOrders = orders.filter(o => o.status === 'pending');
   const lowStockFlavors = flavors.filter(f => f.stock <= f.lowStockThreshold);
 
-  // Auto-save customer from order
-  const upsertCustomer = useCallback((name: string, phone: string, address?: string) => {
-    setCustomers(prev => {
-      const existing = prev.find(c => c.phone === phone);
-      if (existing) {
-        return prev.map(c => c.phone === phone ? { ...c, name, address: address || c.address } : c);
-      }
-      return [...prev, { id: `c${Date.now()}`, name, phone, address, createdAt: new Date().toISOString() }];
-    });
-  }, []);
+  const upsertCustomer = useCallback(async (name: string, phone: string, address?: string) => {
+    if (!user) return;
+    const existing = customers.find(c => c.phone === phone);
+    if (existing) {
+      await supabase.from('customers').update({ name, address: address || existing.address }).eq('id', existing.id);
+      setCustomers(prev => prev.map(c => c.phone === phone ? { ...c, name, address: address || c.address } : c));
+    } else {
+      const { data } = await supabase.from('customers').insert({ user_id: user.id, name, phone, address }).select().single();
+      if (data) setCustomers(prev => [...prev, mapCustomer(data)]);
+    }
+  }, [user, customers]);
 
-  const updateCustomer = useCallback((id: string, updates: Partial<Customer>) => {
+  const updateCustomer = useCallback(async (id: string, updates: Partial<Customer>) => {
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+    if (updates.address !== undefined) dbUpdates.address = updates.address;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    await supabase.from('customers').update(dbUpdates).eq('id', id);
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   }, []);
 
-  const deleteCustomer = useCallback((id: string) => {
+  const deleteCustomer = useCallback(async (id: string) => {
+    await supabase.from('customers').delete().eq('id', id);
     setCustomers(prev => prev.filter(c => c.id !== id));
   }, []);
 
@@ -64,54 +86,111 @@ export function useYogurtStore() {
     return orders.filter(o => o.customerPhone === phone);
   }, [orders]);
 
-  const addOrder = useCallback((order: Omit<Order, 'id' | 'createdAt'>) => {
-    const newOrder: Order = { ...order, id: `o${Date.now()}`, createdAt: new Date().toISOString() };
-    setOrders(prev => [newOrder, ...prev]);
-    // Auto-save customer
-    upsertCustomer(order.customerName, order.customerPhone, order.deliveryAddress);
-  }, [upsertCustomer]);
+  const addOrder = useCallback(async (order: Omit<Order, 'id' | 'createdAt'>) => {
+    if (!user) return;
+    const { data } = await supabase.from('orders').insert({
+      user_id: user.id,
+      customer_name: order.customerName,
+      customer_phone: order.customerPhone,
+      delivery_address: order.deliveryAddress,
+      delivery_fee: order.deliveryFee,
+      items: order.items as any,
+      status: order.status,
+      total_amount: order.totalAmount,
+      notes: order.notes,
+    }).select().single();
+    if (data) setOrders(prev => [mapOrder(data), ...prev]);
+    await upsertCustomer(order.customerName, order.customerPhone, order.deliveryAddress);
+  }, [user, upsertCustomer]);
 
-  const updateOrderStatus = useCallback((id: string, status: Order['status']) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id !== id) return o;
-      if (status === 'completed' && o.status !== 'completed') {
-        const sale: Sale = { id: `s${Date.now()}`, orderId: o.id, items: o.items, totalAmount: o.totalAmount, date: new Date().toISOString() };
-        setSales(s => [sale, ...s]);
-        setFlavors(f => f.map(fl => {
-          const item = o.items.find(i => i.flavorId === fl.id);
-          return item ? { ...fl, stock: Math.max(0, fl.stock - item.quantity) } : fl;
-        }));
+  const updateOrderStatus = useCallback(async (id: string, status: Order['status']) => {
+    if (!user) return;
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+
+    await supabase.from('orders').update({ status }).eq('id', id);
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+
+    if (status === 'completed' && order.status !== 'completed') {
+      // Create sale
+      const { data: saleData } = await supabase.from('sales').insert({
+        user_id: user.id,
+        order_id: id,
+        items: order.items as any,
+        total_amount: order.totalAmount,
+      }).select().single();
+      if (saleData) setSales(prev => [mapSale(saleData), ...prev]);
+
+      // Deduct stock
+      for (const item of order.items) {
+        const flavor = flavors.find(f => f.id === item.flavorId);
+        if (flavor) {
+          const newStock = Math.max(0, flavor.stock - item.quantity);
+          await supabase.from('flavors').update({ stock: newStock }).eq('id', flavor.id);
+          setFlavors(prev => prev.map(f => f.id === flavor.id ? { ...f, stock: newStock } : f));
+        }
       }
-      return { ...o, status };
-    }));
-  }, []);
+    }
+  }, [user, orders, flavors]);
 
-  const addSale = useCallback((sale: Omit<Sale, 'id'>) => {
-    setSales(prev => [{ ...sale, id: `s${Date.now()}` }, ...prev]);
-    setFlavors(f => f.map(fl => {
-      const item = sale.items.find(i => i.flavorId === fl.id);
-      return item ? { ...fl, stock: Math.max(0, fl.stock - item.quantity) } : fl;
-    }));
-  }, []);
+  const addSale = useCallback(async (sale: Omit<Sale, 'id'>) => {
+    if (!user) return;
+    const { data } = await supabase.from('sales').insert({
+      user_id: user.id,
+      items: sale.items as any,
+      total_amount: sale.totalAmount,
+    }).select().single();
+    if (data) setSales(prev => [mapSale(data), ...prev]);
 
-  const updateStock = useCallback((id: string, newStock: number) => {
+    for (const item of sale.items) {
+      const flavor = flavors.find(f => f.id === item.flavorId);
+      if (flavor) {
+        const newStock = Math.max(0, flavor.stock - item.quantity);
+        await supabase.from('flavors').update({ stock: newStock }).eq('id', flavor.id);
+        setFlavors(prev => prev.map(f => f.id === flavor.id ? { ...f, stock: newStock } : f));
+      }
+    }
+  }, [user, flavors]);
+
+  const updateStock = useCallback(async (id: string, newStock: number) => {
+    await supabase.from('flavors').update({ stock: newStock }).eq('id', id);
     setFlavors(prev => prev.map(f => f.id === id ? { ...f, stock: newStock } : f));
   }, []);
 
-  const addFlavor = useCallback((flavor: Omit<YogurtFlavor, 'id'>) => {
-    setFlavors(prev => [...prev, { ...flavor, id: `f${Date.now()}` }]);
-  }, []);
+  const addFlavor = useCallback(async (flavor: Omit<YogurtFlavor, 'id'>) => {
+    if (!user) return;
+    const { data } = await supabase.from('flavors').insert({
+      user_id: user.id,
+      name: flavor.name,
+      emoji: flavor.emoji,
+      stock: flavor.stock,
+      cost_per_unit: flavor.costPerUnit,
+      price_per_unit: flavor.pricePerUnit,
+      low_stock_threshold: flavor.lowStockThreshold,
+    }).select().single();
+    if (data) setFlavors(prev => [...prev, mapFlavor(data)]);
+  }, [user]);
 
-  const addExpense = useCallback((expense: Omit<Expense, 'id'>) => {
-    setExpenses(prev => [{ ...expense, id: `e${Date.now()}` }, ...prev]);
-  }, []);
+  const addExpense = useCallback(async (expense: Omit<Expense, 'id'>) => {
+    if (!user) return;
+    const { data } = await supabase.from('expenses').insert({
+      user_id: user.id,
+      description: expense.description,
+      amount: expense.amount,
+      category: expense.category,
+      is_recurring: expense.isRecurring || false,
+      recurring_frequency: expense.recurringFrequency,
+    }).select().single();
+    if (data) setExpenses(prev => [mapExpense(data), ...prev]);
+  }, [user]);
 
-  const deleteExpense = useCallback((id: string) => {
+  const deleteExpense = useCallback(async (id: string) => {
+    await supabase.from('expenses').delete().eq('id', id);
     setExpenses(prev => prev.filter(e => e.id !== id));
   }, []);
 
   return {
-    flavors, orders, sales, expenses, customers,
+    flavors, orders, sales, expenses, customers, loading,
     totalSales, totalExpenses, profit, pendingOrders, lowStockFlavors,
     addOrder, updateOrderStatus, addSale, updateStock, addFlavor,
     addExpense, deleteExpense,
