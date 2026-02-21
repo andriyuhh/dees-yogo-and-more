@@ -103,6 +103,24 @@ export function useYogurtStore() {
     await upsertCustomer(order.customerName, order.customerPhone, order.deliveryAddress);
   }, [user, upsertCustomer]);
 
+  const updateOrder = useCallback(async (id: string, updates: Partial<Order>) => {
+    const dbUpdates: any = {};
+    if (updates.customerName !== undefined) dbUpdates.customer_name = updates.customerName;
+    if (updates.customerPhone !== undefined) dbUpdates.customer_phone = updates.customerPhone;
+    if (updates.deliveryAddress !== undefined) dbUpdates.delivery_address = updates.deliveryAddress;
+    if (updates.deliveryFee !== undefined) dbUpdates.delivery_fee = updates.deliveryFee;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.items !== undefined) dbUpdates.items = updates.items;
+    if (updates.totalAmount !== undefined) dbUpdates.total_amount = updates.totalAmount;
+    await supabase.from('orders').update(dbUpdates).eq('id', id);
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
+  }, []);
+
+  const deleteOrder = useCallback(async (id: string) => {
+    await supabase.from('orders').delete().eq('id', id);
+    setOrders(prev => prev.filter(o => o.id !== id));
+  }, []);
+
   const updateOrderStatus = useCallback(async (id: string, status: Order['status']) => {
     if (!user) return;
     const order = orders.find(o => o.id === id);
@@ -112,7 +130,6 @@ export function useYogurtStore() {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
 
     if (status === 'completed' && order.status !== 'completed') {
-      // Create sale
       const { data: saleData } = await supabase.from('sales').insert({
         user_id: user.id,
         order_id: id,
@@ -121,7 +138,6 @@ export function useYogurtStore() {
       }).select().single();
       if (saleData) setSales(prev => [mapSale(saleData), ...prev]);
 
-      // Deduct stock
       for (const item of order.items) {
         const flavor = flavors.find(f => f.id === item.flavorId);
         if (flavor) {
@@ -171,6 +187,23 @@ export function useYogurtStore() {
     if (data) setFlavors(prev => [...prev, mapFlavor(data)]);
   }, [user]);
 
+  const updateFlavor = useCallback(async (id: string, updates: Partial<YogurtFlavor>) => {
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.emoji !== undefined) dbUpdates.emoji = updates.emoji;
+    if (updates.stock !== undefined) dbUpdates.stock = updates.stock;
+    if (updates.costPerUnit !== undefined) dbUpdates.cost_per_unit = updates.costPerUnit;
+    if (updates.pricePerUnit !== undefined) dbUpdates.price_per_unit = updates.pricePerUnit;
+    if (updates.lowStockThreshold !== undefined) dbUpdates.low_stock_threshold = updates.lowStockThreshold;
+    await supabase.from('flavors').update(dbUpdates).eq('id', id);
+    setFlavors(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+  }, []);
+
+  const deleteFlavor = useCallback(async (id: string) => {
+    await supabase.from('flavors').delete().eq('id', id);
+    setFlavors(prev => prev.filter(f => f.id !== id));
+  }, []);
+
   const addExpense = useCallback(async (expense: Omit<Expense, 'id'>) => {
     if (!user) return;
     const { data } = await supabase.from('expenses').insert({
@@ -192,7 +225,8 @@ export function useYogurtStore() {
   return {
     flavors, orders, sales, expenses, customers, loading,
     totalSales, totalExpenses, profit, pendingOrders, lowStockFlavors,
-    addOrder, updateOrderStatus, addSale, updateStock, addFlavor,
+    addOrder, updateOrder, deleteOrder, updateOrderStatus,
+    addSale, updateStock, addFlavor, updateFlavor, deleteFlavor,
     addExpense, deleteExpense,
     upsertCustomer, updateCustomer, deleteCustomer, getCustomerOrders,
   };
