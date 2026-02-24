@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
-import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2 } from 'lucide-react';
+import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { jsPDF } from 'jspdf';
+import logoImg from '@/assets/logo.jpg';
 import type { Order, OrderItem } from '@/types/yogurt';
 
 function OrderFormDialog({ order, onSave, trigger }: {
@@ -134,11 +136,145 @@ function generateInvoiceText(order: Order): string {
   return lines;
 }
 
-function shareOnWhatsApp(order: Order) {
-  const text = generateInvoiceText(order);
-  const phone = order.customerPhone.replace(/[^0-9+]/g, '');
-  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
+function loadImageAsBase64(src: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg'));
+    };
+    img.src = src;
+  });
+}
+
+async function generateInvoicePDF(order: Order): Promise<jsPDF> {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  // Load logo
+  try {
+    const logoData = await loadImageAsBase64(logoImg);
+    doc.addImage(logoData, 'JPEG', (pageW - 30) / 2, 8, 30, 30);
+  } catch { /* skip logo if fails */ }
+
+  // Header
+  let y = 42;
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text("Dee's Yogo & More", pageW / 2, y, { align: 'center' });
+  y += 6;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'italic');
+  doc.text('"Cream Come True"', pageW / 2, y, { align: 'center' });
+
+  // Invoice title
+  y += 10;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('INVOICE', pageW / 2, y, { align: 'center' });
+
+  // Line
+  y += 4;
+  doc.setDrawColor(180);
+  doc.setLineWidth(0.5);
+  doc.line(20, y, pageW - 20, y);
+
+  // Customer details
+  y += 8;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const dateStr = new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  doc.text(`Date: ${dateStr}`, 20, y);
+  doc.text(`Invoice #: ${order.id.slice(0, 8).toUpperCase()}`, pageW - 20, y, { align: 'right' });
+  y += 6;
+  doc.text(`Customer: ${order.customerName}`, 20, y);
+  y += 5;
+  doc.text(`Phone: ${order.customerPhone}`, 20, y);
+  if (order.deliveryAddress) {
+    y += 5;
+    doc.text(`Address: ${order.deliveryAddress}`, 20, y);
+  }
+
+  // Table header
+  y += 10;
+  doc.setFillColor(100, 60, 150);
+  doc.rect(20, y - 4, pageW - 40, 7, 'F');
+  doc.setTextColor(255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('Item', 24, y);
+  doc.text('Qty', 100, y, { align: 'center' });
+  doc.text('Unit Price', 130, y, { align: 'center' });
+  doc.text('Amount', pageW - 24, y, { align: 'right' });
+
+  // Table rows
+  doc.setTextColor(0);
+  doc.setFont('helvetica', 'normal');
+  y += 7;
+  order.items.forEach((item) => {
+    const amount = item.quantity * item.unitPrice;
+    doc.text(item.flavorName, 24, y);
+    doc.text(String(item.quantity), 100, y, { align: 'center' });
+    doc.text(`Le ${item.unitPrice.toFixed(2)}`, 130, y, { align: 'center' });
+    doc.text(`Le ${amount.toFixed(2)}`, pageW - 24, y, { align: 'right' });
+    y += 6;
+  });
+
+  // Totals
+  y += 2;
+  doc.line(100, y, pageW - 20, y);
+  y += 6;
+  const subtotal = order.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  doc.text('Subtotal:', 120, y);
+  doc.text(`Le ${subtotal.toFixed(2)}`, pageW - 24, y, { align: 'right' });
+  if (order.deliveryFee > 0) {
+    y += 6;
+    doc.text('Delivery Fee:', 120, y);
+    doc.text(`Le ${order.deliveryFee.toFixed(2)}`, pageW - 24, y, { align: 'right' });
+  }
+  y += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('TOTAL:', 120, y);
+  doc.text(`Le ${order.totalAmount.toFixed(2)}`, pageW - 24, y, { align: 'right' });
+
+  // Notes
+  if (order.notes) {
+    y += 10;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`Notes: ${order.notes}`, 20, y);
+  }
+
+  // Footer
+  y = 270;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120);
+  doc.text("Thank you for choosing Dee's Yogo & More! 🍨", pageW / 2, y, { align: 'center' });
+
+  return doc;
+}
+
+async function shareInvoicePDF(order: Order) {
+  const doc = await generateInvoicePDF(order);
+  const pdfBlob = doc.output('blob');
+  const file = new File([pdfBlob], `Invoice-${order.customerName.replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
+
+  // Try native share (works on mobile with WhatsApp)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({ files: [file], title: 'Invoice', text: `Invoice for ${order.customerName} - Dee's Yogo & More` });
+  } else {
+    // Fallback: download PDF + open WhatsApp with text
+    doc.save(file.name);
+    const text = generateInvoiceText(order);
+    const phone = order.customerPhone.replace(/[^0-9+]/g, '');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  }
 }
 
 export default function OrdersPage() {
@@ -199,7 +335,7 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between">
               <p className="font-extrabold text-lg">Le {order.totalAmount.toFixed(2)}</p>
               <div className="flex gap-1.5">
-                <button onClick={() => shareOnWhatsApp(order)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share invoice on WhatsApp">
+                <button onClick={() => shareInvoicePDF(order)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share PDF invoice">
                   <Share2 className="h-3.5 w-3.5" />
                 </button>
                 {order.status === 'pending' && (
