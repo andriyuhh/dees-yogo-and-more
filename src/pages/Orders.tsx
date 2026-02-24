@@ -99,23 +99,37 @@ function OrderFormDialog({ order, onSave, trigger }: {
 }
 
 function generateInvoiceText(order: Order): string {
+  const itemsSubtotal = order.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   const lines = [
+    `🍨 *DEE'S YOGO & MORE*`,
+    `_"Cream Come True"_`,
+    ``,
+    `━━━━━━━━━━━━━━━━━`,
     `🧾 *INVOICE*`,
-    `———————————`,
-    `📅 Date: ${new Date(order.createdAt).toLocaleDateString()}`,
-    `👤 Customer: ${order.customerName}`,
-    `📞 Phone: ${order.customerPhone}`,
-    order.deliveryAddress ? `📍 Address: ${order.deliveryAddress}` : '',
+    `━━━━━━━━━━━━━━━━━`,
     ``,
-    `*Items:*`,
-    ...order.items.map(i => `  • ${i.quantity}x ${i.flavorName} @ Le ${i.unitPrice.toFixed(2)} = Le ${(i.quantity * i.unitPrice).toFixed(2)}`),
+    `📅 *Date:* ${new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`,
+    `👤 *Customer:* ${order.customerName}`,
+    `📞 *Phone:* ${order.customerPhone}`,
+    order.deliveryAddress ? `📍 *Address:* ${order.deliveryAddress}` : '',
     ``,
-    `———————————`,
-    order.deliveryFee > 0 ? `🚗 Delivery Fee: Le ${order.deliveryFee.toFixed(2)}` : '',
-    `💰 *Total: Le ${order.totalAmount.toFixed(2)}*`,
-    order.notes ? `📝 Notes: ${order.notes}` : '',
+    `━━━━━━━━━━━━━━━━━`,
+    `📦 *ORDER DETAILS*`,
+    `━━━━━━━━━━━━━━━━━`,
+    ...order.items.map(i =>
+      `▸ ${i.flavorName} × ${i.quantity}\n   Le ${i.unitPrice.toFixed(2)} each → *Le ${(i.quantity * i.unitPrice).toFixed(2)}*`
+    ),
     ``,
-    `Thank you for your order! 🍨`,
+    `───────────────────`,
+    `   Subtotal: Le ${itemsSubtotal.toFixed(2)}`,
+    order.deliveryFee > 0 ? `   🚗 Delivery: Le ${order.deliveryFee.toFixed(2)}` : '',
+    `───────────────────`,
+    `   💰 *TOTAL: Le ${order.totalAmount.toFixed(2)}*`,
+    `━━━━━━━━━━━━━━━━━`,
+    order.notes ? `\n📝 _${order.notes}_` : '',
+    ``,
+    `Thank you for choosing *Dee's Yogo & More*! 🍨`,
+    `We appreciate your patronage 💜`,
   ].filter(Boolean).join('\n');
   return lines;
 }
