@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
-import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -98,6 +98,35 @@ function OrderFormDialog({ order, onSave, trigger }: {
   );
 }
 
+function generateInvoiceText(order: Order): string {
+  const lines = [
+    `🧾 *INVOICE*`,
+    `———————————`,
+    `📅 Date: ${new Date(order.createdAt).toLocaleDateString()}`,
+    `👤 Customer: ${order.customerName}`,
+    `📞 Phone: ${order.customerPhone}`,
+    order.deliveryAddress ? `📍 Address: ${order.deliveryAddress}` : '',
+    ``,
+    `*Items:*`,
+    ...order.items.map(i => `  • ${i.quantity}x ${i.flavorName} @ Le ${i.unitPrice.toFixed(2)} = Le ${(i.quantity * i.unitPrice).toFixed(2)}`),
+    ``,
+    `———————————`,
+    order.deliveryFee > 0 ? `🚗 Delivery Fee: Le ${order.deliveryFee.toFixed(2)}` : '',
+    `💰 *Total: Le ${order.totalAmount.toFixed(2)}*`,
+    order.notes ? `📝 Notes: ${order.notes}` : '',
+    ``,
+    `Thank you for your order! 🍨`,
+  ].filter(Boolean).join('\n');
+  return lines;
+}
+
+function shareOnWhatsApp(order: Order) {
+  const text = generateInvoiceText(order);
+  const phone = order.customerPhone.replace(/[^0-9+]/g, '');
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
 export default function OrdersPage() {
   const { orders, addOrder, updateOrder, deleteOrder, updateOrderStatus, loading } = useYogurtStore();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
@@ -156,6 +185,9 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between">
               <p className="font-extrabold text-lg">Le {order.totalAmount.toFixed(2)}</p>
               <div className="flex gap-1.5">
+                <button onClick={() => shareOnWhatsApp(order)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share invoice on WhatsApp">
+                  <Share2 className="h-3.5 w-3.5" />
+                </button>
                 {order.status === 'pending' && (
                   <>
                     <OrderFormDialog
