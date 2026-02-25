@@ -19,27 +19,33 @@ export type Database = {
           address: string | null
           created_at: string
           id: string
+          loyalty_rewards_claimed: number
           name: string
           notes: string | null
           phone: string
+          purchase_count: number
           user_id: string
         }
         Insert: {
           address?: string | null
           created_at?: string
           id?: string
+          loyalty_rewards_claimed?: number
           name: string
           notes?: string | null
           phone?: string
+          purchase_count?: number
           user_id: string
         }
         Update: {
           address?: string | null
           created_at?: string
           id?: string
+          loyalty_rewards_claimed?: number
           name?: string
           notes?: string | null
           phone?: string
+          purchase_count?: number
           user_id?: string
         }
         Relationships: []
@@ -189,6 +195,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          dark_mode: boolean
+          hide_profit: boolean
+          id: string
+          last_backup_reminder: string | null
+          pin_hash: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dark_mode?: boolean
+          hide_profit?: boolean
+          id?: string
+          last_backup_reminder?: string | null
+          pin_hash?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dark_mode?: boolean
+          hide_profit?: boolean
+          id?: string
+          last_backup_reminder?: string | null
+          pin_hash?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

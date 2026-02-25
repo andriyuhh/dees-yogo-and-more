@@ -1,13 +1,13 @@
 import { NavLink as RouterNavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, TrendingUp, Users, Receipt } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, TrendingUp, Users, Settings } from 'lucide-react';
 
 const tabs = [
   { to: '/', icon: LayoutDashboard, label: 'Home' },
   { to: '/orders', icon: ShoppingCart, label: 'Orders' },
   { to: '/inventory', icon: Package, label: 'Stock' },
   { to: '/customers', icon: Users, label: 'CRM' },
-  { to: '/expenses', icon: Receipt, label: 'Expenses' },
   { to: '/sales', icon: TrendingUp, label: 'Sales' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function MobileNav() {

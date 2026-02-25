@@ -46,7 +46,7 @@ export function useYogurtStore() {
     return { id: r.id, description: r.description, amount: Number(r.amount), date: r.date, category: r.category, isRecurring: r.is_recurring, recurringFrequency: r.recurring_frequency };
   }
   function mapCustomer(r: any): Customer {
-    return { id: r.id, name: r.name, phone: r.phone, address: r.address, notes: r.notes, createdAt: r.created_at };
+    return { id: r.id, name: r.name, phone: r.phone, address: r.address, notes: r.notes, createdAt: r.created_at, purchaseCount: r.purchase_count || 0, loyaltyRewardsClaimed: r.loyalty_rewards_claimed || 0 };
   }
 
   const totalSales = sales.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -146,8 +146,16 @@ export function useYogurtStore() {
           setFlavors(prev => prev.map(f => f.id === flavor.id ? { ...f, stock: newStock } : f));
         }
       }
+
+      // Increment purchase count for customer loyalty
+      const customer = customers.find(c => c.phone === order.customerPhone);
+      if (customer) {
+        const newCount = customer.purchaseCount + 1;
+        await supabase.from('customers').update({ purchase_count: newCount }).eq('id', customer.id);
+        setCustomers(prev => prev.map(c => c.id === customer.id ? { ...c, purchaseCount: newCount } : c));
+      }
     }
-  }, [user, orders, flavors]);
+  }, [user, orders, flavors, customers]);
 
   const addSale = useCallback(async (sale: Omit<Sale, 'id'>) => {
     if (!user) return;
@@ -222,6 +230,14 @@ export function useYogurtStore() {
     setExpenses(prev => prev.filter(e => e.id !== id));
   }, []);
 
+  const redeemLoyaltyReward = useCallback(async (customerId: string) => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer || customer.purchaseCount < 10 * (customer.loyaltyRewardsClaimed + 1)) return;
+    const newClaimed = customer.loyaltyRewardsClaimed + 1;
+    await supabase.from('customers').update({ loyalty_rewards_claimed: newClaimed }).eq('id', customerId);
+    setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, loyaltyRewardsClaimed: newClaimed } : c));
+  }, [customers]);
+
   return {
     flavors, orders, sales, expenses, customers, loading,
     totalSales, totalExpenses, profit, pendingOrders, lowStockFlavors,
@@ -229,5 +245,6 @@ export function useYogurtStore() {
     addSale, updateStock, addFlavor, updateFlavor, deleteFlavor,
     addExpense, deleteExpense,
     upsertCustomer, updateCustomer, deleteCustomer, getCustomerOrders,
+    redeemLoyaltyReward,
   };
 }

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
-import { Users, Phone, MapPin, ShoppingCart, Search, Pencil, Trash2 } from 'lucide-react';
+import { Users, Phone, MapPin, ShoppingCart, Search, Pencil, Trash2, Gift, Award } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import type { Customer } from '@/types/yogurt';
 
 function EditCustomerDialog({ customer, onSave }: { customer: Customer; onSave: (updates: Partial<Customer>) => void }) {
@@ -46,8 +47,43 @@ function EditCustomerDialog({ customer, onSave }: { customer: Customer; onSave: 
   );
 }
 
+function LoyaltyBadge({ customer, onRedeem }: { customer: Customer; onRedeem: () => void }) {
+  const nextRewardAt = 10 * (customer.loyaltyRewardsClaimed + 1);
+  const progress = customer.purchaseCount % 10;
+  const canRedeem = customer.purchaseCount >= nextRewardAt;
+
+  return (
+    <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Award className="h-4 w-4 text-primary" />
+          <span className="text-xs font-bold">Loyalty Program</span>
+        </div>
+        {customer.loyaltyRewardsClaimed > 0 && (
+          <span className="text-[10px] bg-success/20 text-success px-2 py-0.5 rounded-full font-bold">
+            🎁 {customer.loyaltyRewardsClaimed} redeemed
+          </span>
+        )}
+      </div>
+      <div className="flex gap-1 mb-1.5">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div key={i} className={`h-2 flex-1 rounded-full transition-all ${i < progress ? 'bg-primary' : 'bg-muted'}`} />
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-muted-foreground">{customer.purchaseCount} purchases • {canRedeem ? '🎉 Free cup ready!' : `${10 - progress} more to go`}</span>
+        {canRedeem && (
+          <Button size="sm" onClick={onRedeem} className="h-6 text-[10px] gradient-berry text-primary-foreground rounded-full px-3">
+            <Gift className="h-3 w-3 mr-1" /> Redeem Free Cup
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CustomersPage() {
-  const { customers, getCustomerOrders, updateCustomer, deleteCustomer, loading } = useYogurtStore();
+  const { customers, getCustomerOrders, updateCustomer, deleteCustomer, redeemLoyaltyReward, loading } = useYogurtStore();
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -58,6 +94,11 @@ export default function CustomersPage() {
 
   const selectedCustomer = customers.find(c => c.id === selectedId);
   const customerOrders = selectedCustomer ? getCustomerOrders(selectedCustomer.phone) : [];
+
+  const handleRedeem = (id: string) => {
+    redeemLoyaltyReward(id);
+    toast.success('🎁 Free cup redeemed! Customer will love it!');
+  };
 
   if (loading) {
     return (
@@ -112,6 +153,7 @@ export default function CustomersPage() {
                 </AlertDialog>
               </div>
             </div>
+            <LoyaltyBadge customer={selectedCustomer} onRedeem={() => handleRedeem(selectedCustomer.id)} />
           </div>
 
           <h3 className="font-bold text-sm mb-2 flex items-center gap-1"><ShoppingCart className="h-4 w-4" /> Order History ({customerOrders.length})</h3>
@@ -135,15 +177,21 @@ export default function CustomersPage() {
         <div className="space-y-2">
           {filtered.map((c, i) => {
             const orderCount = getCustomerOrders(c.phone).length;
+            const nextRewardAt = 10 * (c.loyaltyRewardsClaimed + 1);
+            const canRedeem = c.purchaseCount >= nextRewardAt;
             return (
               <button key={c.id} onClick={() => setSelectedId(c.id)} className="w-full card-playful text-left animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold">{c.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold">{c.name}</p>
+                      {canRedeem && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">🎁 Free cup!</span>}
+                    </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground"><Phone className="h-3 w-3" /> {c.phone}</div>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-semibold text-primary">{orderCount} order{orderCount !== 1 ? 's' : ''}</p>
+                    <p className="text-[10px] text-muted-foreground">{c.purchaseCount} purchases</p>
                   </div>
                 </div>
               </button>
