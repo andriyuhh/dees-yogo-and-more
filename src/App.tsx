@@ -5,13 +5,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { SettingsProvider, useSettings } from "@/hooks/useSettings";
 import AppLayout from "./components/AppLayout";
+import PinLock from "./components/PinLock";
+import BackupReminder from "./components/BackupReminder";
 import Index from "./pages/Index";
 import Orders from "./pages/Orders";
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Customers from "./pages/Customers";
 import Expenses from "./pages/Expenses";
+import Settings from "./pages/Settings";
 import AuthPage from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
@@ -35,17 +39,33 @@ function AppRoutes() {
   if (!user) return <AuthPage />;
 
   return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<Index />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/sales" element={<Sales />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/expenses" element={<Expenses />} />
-      </Route>
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
+  );
+}
+
+function AppContent() {
+  const { pinLocked } = useSettings();
+
+  if (pinLocked) return <PinLock />;
+
+  return (
+    <>
+      <BackupReminder />
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Index />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/sales" element={<Sales />} />
+          <Route path="/customers" element={<Customers />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
 

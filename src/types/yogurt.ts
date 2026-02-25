@@ -15,6 +15,8 @@ export interface Customer {
   address?: string;
   notes?: string;
   createdAt: string;
+  purchaseCount: number;
+  loyaltyRewardsClaimed: number;
 }
 
 export interface Order {

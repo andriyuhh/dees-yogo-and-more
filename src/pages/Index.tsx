@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
-import { useAuth } from '@/hooks/useAuth';
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, AlertTriangle, LogOut } from 'lucide-react';
+import { useSettings } from '@/hooks/useSettings';
+import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import logo from '@/assets/logo.jpg';
 
@@ -28,7 +28,7 @@ function MetricCard({ icon: Icon, label, value, subtitle, variant = 'default', d
 
 export default function Dashboard() {
   const { totalSales, totalExpenses, profit, pendingOrders, lowStockFlavors, sales, orders, loading } = useYogurtStore();
-  const { signOut } = useAuth();
+  const { settings } = useSettings();
 
   const todaySales = sales.filter(s => new Date(s.date).toDateString() === new Date().toDateString());
   const todayRevenue = todaySales.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -84,9 +84,7 @@ export default function Dashboard() {
             <h1 className="text-xl font-extrabold text-foreground">Dee's Yogo & More</h1>
           </div>
         </div>
-        <button onClick={signOut} className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors" title="Sign out">
-          <LogOut className="h-4 w-4 text-muted-foreground" />
-        </button>
+        <div className="h-9 w-9" /> {/* spacer */}
       </header>
 
       {/* Today highlight */}
@@ -101,7 +99,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3 mb-6">
         <MetricCard icon={DollarSign} label="Total Sales" value={`Le ${totalSales.toFixed(0)}`} delay={50} />
         <MetricCard icon={TrendingDown} label="Expenses" value={`Le ${totalExpenses.toFixed(0)}`} delay={100} />
-        <MetricCard icon={TrendingUp} label="Profit" value={`Le ${profit.toFixed(0)}`} variant="success" subtitle={profit >= 0 ? '🎉 Looking good!' : '⚠️ Needs attention'} delay={150} />
+        {!settings.hideProfit && <MetricCard icon={TrendingUp} label="Profit" value={`Le ${profit.toFixed(0)}`} variant="success" subtitle={profit >= 0 ? '🎉 Looking good!' : '⚠️ Needs attention'} delay={150} />}
         <MetricCard icon={ShoppingCart} label="Pending" value={`${pendingOrders.length}`} variant="berry" subtitle={`${orders.length} total orders`} delay={200} />
       </div>
 
