@@ -127,8 +127,10 @@ export type Database = {
           delivery_address: string | null
           delivery_fee: number
           id: string
+          is_paid: boolean
           items: Json
           notes: string | null
+          payment_method: string | null
           status: string
           total_amount: number
           user_id: string
@@ -140,8 +142,10 @@ export type Database = {
           delivery_address?: string | null
           delivery_fee?: number
           id?: string
+          is_paid?: boolean
           items?: Json
           notes?: string | null
+          payment_method?: string | null
           status?: string
           total_amount?: number
           user_id: string
@@ -153,8 +157,10 @@ export type Database = {
           delivery_address?: string | null
           delivery_fee?: number
           id?: string
+          is_paid?: boolean
           items?: Json
           notes?: string | null
+          payment_method?: string | null
           status?: string
           total_amount?: number
           user_id?: string

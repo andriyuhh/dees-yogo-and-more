@@ -22,6 +22,8 @@ function OrderFormDialog({ order, onSave, trigger }: {
   const [phone, setPhone] = useState(order?.customerPhone || '');
   const [address, setAddress] = useState(order?.deliveryAddress || '');
   const [deliveryFee, setDeliveryFee] = useState(order?.deliveryFee || 0);
+  const [isPaid, setIsPaid] = useState(order?.isPaid || false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile_money' | ''>(order?.paymentMethod || '');
   const [items, setItems] = useState<Record<string, number>>(() => {
     if (!order) return {};
     const map: Record<string, number> = {};
@@ -34,6 +36,7 @@ function OrderFormDialog({ order, onSave, trigger }: {
     if (isOpen && order) {
       setName(order.customerName); setPhone(order.customerPhone);
       setAddress(order.deliveryAddress || ''); setDeliveryFee(order.deliveryFee);
+      setIsPaid(order.isPaid); setPaymentMethod(order.paymentMethod || '');
       const map: Record<string, number> = {};
       order.items.forEach(i => { map[i.flavorId] = i.quantity; });
       setItems(map); setNotes(order.notes || '');
@@ -63,8 +66,9 @@ function OrderFormDialog({ order, onSave, trigger }: {
       deliveryAddress: address || undefined, deliveryFee,
       items: orderItems, status: order?.status || 'pending',
       totalAmount: subtotal + deliveryFee, notes: notes || undefined,
+      isPaid, paymentMethod: paymentMethod || undefined,
     });
-    if (!order) { setName(''); setPhone(''); setAddress(''); setDeliveryFee(0); setItems({}); setNotes(''); }
+    if (!order) { setName(''); setPhone(''); setAddress(''); setDeliveryFee(0); setItems({}); setNotes(''); setIsPaid(false); setPaymentMethod(''); }
     setOpen(false);
   };
 
@@ -91,6 +95,27 @@ function OrderFormDialog({ order, onSave, trigger }: {
             </div>
           </div>
           <div className="animate-fade-in stagger-6"><Label>Notes (optional)</Label><Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Special instructions" /></div>
+          <div className="animate-fade-in stagger-6">
+            <Label>💰 Payment</Label>
+            <div className="flex gap-2 mt-1">
+              <button type="button" onClick={() => setIsPaid(!isPaid)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${isPaid ? 'bg-success/20 text-success' : 'bg-destructive/15 text-destructive'}`}>
+                {isPaid ? '✅ Paid' : '❌ Unpaid'}
+              </button>
+              {isPaid && (
+                <>
+                  <button type="button" onClick={() => setPaymentMethod('cash')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${paymentMethod === 'cash' ? 'gradient-berry text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                    💵 Cash
+                  </button>
+                  <button type="button" onClick={() => setPaymentMethod('mobile_money')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${paymentMethod === 'mobile_money' ? 'gradient-berry text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                    📱 Mobile Money
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
           <Button onClick={handleSubmit} className="w-full gradient-berry text-primary-foreground rounded-xl shadow-md hover:shadow-lg transition-shadow">
             {order ? 'Save Changes ✨' : 'Create Order ✨'}
           </Button>
@@ -393,9 +418,17 @@ export default function OrdersPage() {
                   <div className="flex items-start gap-1 text-xs text-muted-foreground mt-1"><MapPin className="h-3 w-3 mt-0.5 shrink-0" /> {order.deliveryAddress}</div>
                 )}
               </div>
-              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${order.status === 'pending' ? 'bg-warning/20 text-warning' : order.status === 'completed' ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
-                {order.status === 'pending' ? '⏳' : order.status === 'completed' ? '✅' : '❌'} {order.status}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${order.status === 'pending' ? 'bg-warning/20 text-warning' : order.status === 'completed' ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
+                  {order.status === 'pending' ? '⏳' : order.status === 'completed' ? '✅' : '❌'} {order.status}
+                </span>
+                <button
+                  onClick={() => updateOrder(order.id, { isPaid: !order.isPaid, paymentMethod: !order.isPaid ? (order.paymentMethod || 'cash') : order.paymentMethod })}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${order.isPaid ? 'bg-success/20 text-success' : 'bg-destructive/15 text-destructive'}`}
+                >
+                  {order.isPaid ? `✅ ${order.paymentMethod === 'mobile_money' ? '📱 MoMo' : '💵 Cash'}` : '❌ Unpaid'}
+                </button>
+              </div>
             </div>
             <div className="text-sm text-muted-foreground mb-2">{order.items.map(i => `${i.quantity}x ${i.flavorName}`).join(', ')}</div>
             {order.deliveryFee > 0 && <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1"><Truck className="h-3 w-3" /> Delivery: Le {order.deliveryFee.toFixed(2)}</div>}
