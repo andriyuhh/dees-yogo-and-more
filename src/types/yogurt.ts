@@ -30,6 +30,8 @@ export interface Order {
   totalAmount: number;
   createdAt: string;
   notes?: string;
+  isPaid: boolean;
+  paymentMethod?: 'cash' | 'mobile_money';
 }
 
 export interface OrderItem {

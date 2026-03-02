@@ -37,7 +37,7 @@ export function useYogurtStore() {
     return { id: r.id, name: r.name, emoji: r.emoji, stock: r.stock, costPerUnit: Number(r.cost_per_unit), pricePerUnit: Number(r.price_per_unit), lowStockThreshold: r.low_stock_threshold };
   }
   function mapOrder(r: any): Order {
-    return { id: r.id, customerName: r.customer_name, customerPhone: r.customer_phone, deliveryAddress: r.delivery_address, deliveryFee: Number(r.delivery_fee), items: r.items as OrderItem[], status: r.status, totalAmount: Number(r.total_amount), createdAt: r.created_at, notes: r.notes };
+    return { id: r.id, customerName: r.customer_name, customerPhone: r.customer_phone, deliveryAddress: r.delivery_address, deliveryFee: Number(r.delivery_fee), items: r.items as OrderItem[], status: r.status, totalAmount: Number(r.total_amount), createdAt: r.created_at, notes: r.notes, isPaid: r.is_paid ?? false, paymentMethod: r.payment_method };
   }
   function mapSale(r: any): Sale {
     return { id: r.id, orderId: r.order_id, items: r.items as OrderItem[], totalAmount: Number(r.total_amount), date: r.date };
@@ -98,6 +98,8 @@ export function useYogurtStore() {
       status: order.status,
       total_amount: order.totalAmount,
       notes: order.notes,
+      is_paid: order.isPaid ?? false,
+      payment_method: order.paymentMethod,
     }).select().single();
     if (data) setOrders(prev => [mapOrder(data), ...prev]);
     await upsertCustomer(order.customerName, order.customerPhone, order.deliveryAddress);
@@ -112,6 +114,8 @@ export function useYogurtStore() {
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.items !== undefined) dbUpdates.items = updates.items;
     if (updates.totalAmount !== undefined) dbUpdates.total_amount = updates.totalAmount;
+    if (updates.isPaid !== undefined) dbUpdates.is_paid = updates.isPaid;
+    if (updates.paymentMethod !== undefined) dbUpdates.payment_method = updates.paymentMethod;
     await supabase.from('orders').update(dbUpdates).eq('id', id);
     setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
   }, []);
