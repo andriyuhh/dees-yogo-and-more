@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
-import { useBiometricAuth } from '@/components/PinLock';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint } from 'lucide-react';
+import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const { settings, updateSettings, setPin, removePin } = useSettings();
   const { signOut } = useAuth();
-  const biometric = useBiometricAuth();
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [showPinForm, setShowPinForm] = useState(false);
@@ -93,24 +91,6 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
-
-        {/* Biometric Unlock */}
-        {settings.pinHash && (
-          <div className="card-playful flex items-center justify-between animate-slide-up" style={{ animationDelay: '120ms' }}>
-            <div className="flex items-center gap-3">
-              <Fingerprint className="h-5 w-5 text-primary" />
-              <div>
-                <Label className="font-bold text-sm">Biometric Unlock</Label>
-                <p className="text-xs text-muted-foreground">{biometric.available ? 'Face / fingerprint enabled' : 'Use fingerprint or face to unlock'}</p>
-              </div>
-            </div>
-            {biometric.available ? (
-              <Button variant="destructive" size="sm" onClick={() => { biometric.remove(); toast.success('Biometric removed'); }} className="rounded-full text-xs">Remove</Button>
-            ) : (
-              <Button size="sm" onClick={async () => { const ok = await biometric.enroll(); if (ok) toast.success('Biometric set up! 🎉'); else toast.error('Not supported on this device'); }} className="gradient-berry text-primary-foreground rounded-full text-xs">Enable</Button>
-            )}
-          </div>
-        )}
 
         {/* Backup Reminder */}
         <div className="card-playful flex items-center justify-between animate-slide-up" style={{ animationDelay: '150ms' }}>
