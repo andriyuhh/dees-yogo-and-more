@@ -1,13 +1,108 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSettings } from '@/hooks/useSettings';
-import { ShieldCheck, Delete } from 'lucide-react';
+import { ShieldCheck, Delete, Fingerprint } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
+
+// Biometric hook that uses platform authenticator directly (no Google passkey)
+function useBiometricAuth() {
+  const [available, setAvailable] = useState(false);
+
+  useEffect(() => {
+    const hasCred = !!localStorage.getItem('bio_cred_id');
+    if (hasCred && window.PublicKeyCredential) {
+      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(ok => setAvailable(ok));
+    }
+  }, []);
+
+  const enroll = useCallback(async (): Promise<boolean> => {
+    try {
+      if (!window.PublicKeyCredential) return false;
+      const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (!ok) return false;
+
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const userId = crypto.getRandomValues(new Uint8Array(16));
+
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: "Dee's Yogo & More", id: window.location.hostname },
+          user: { id: userId, name: 'owner', displayName: 'Store Owner' },
+          pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            userVerification: 'required',
+            residentKey: 'discouraged',        // <-- avoids passkey manager
+            requireResidentKey: false,
+          },
+          attestation: 'none',
+          timeout: 60000,
+        },
+      }) as PublicKeyCredential | null;
+
+      if (credential) {
+        localStorage.setItem('bio_cred_id', btoa(String.fromCharCode(...new Uint8Array(credential.rawId))));
+        setAvailable(true);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const authenticate = useCallback(async (): Promise<boolean> => {
+    try {
+      const credId = localStorage.getItem('bio_cred_id');
+      if (!credId) return false;
+
+      const rawId = Uint8Array.from(atob(credId), c => c.charCodeAt(0));
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+      const assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          allowCredentials: [{ id: rawId, type: 'public-key', transports: ['internal'] }],
+          userVerification: 'required',
+          timeout: 60000,
+        },
+      });
+
+      return !!assertion;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const remove = useCallback(() => {
+    localStorage.removeItem('bio_cred_id');
+    setAvailable(false);
+  }, []);
+
+  return { available, enroll, authenticate, remove };
+}
+
+export { useBiometricAuth };
 
 export default function PinLock() {
   const { verifyPin, setPinLocked } = useSettings();
+  const biometric = useBiometricAuth();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+
+  useEffect(() => {
+    if (biometric.available) handleBiometric();
+  }, [biometric.available]);
+
+  const handleBiometric = async () => {
+    if (unlocking) return;
+    setUnlocking(true);
+    const ok = await biometric.authenticate();
+    if (ok) setPinLocked(false);
+    setUnlocking(false);
+  };
 
   const handleDigit = (d: string) => {
     if (pin.length >= 4) return;
@@ -32,11 +127,9 @@ export default function PinLock() {
 
   return (
     <div className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center p-6 overflow-hidden">
-      {/* Ambient glow */}
       <div className="absolute top-[-120px] left-[-80px] w-72 h-72 rounded-full bg-primary/10 blur-[100px]" />
       <div className="absolute bottom-[-100px] right-[-60px] w-64 h-64 rounded-full bg-accent/8 blur-[80px]" />
 
-      {/* Logo */}
       <div className="relative mb-5">
         <div className="absolute -inset-3 rounded-full bg-primary/15 blur-2xl animate-pulse" />
         <img src={logo} alt="Logo" className="w-16 h-16 rounded-full object-cover shadow-2xl ring-2 ring-primary/40 relative" />
@@ -88,8 +181,18 @@ export default function PinLock() {
           </button>
         ))}
 
-        {/* Bottom row: empty / 0 / delete */}
-        <div />
+        {/* Bottom row: biometric / 0 / delete */}
+        {biometric.available ? (
+          <button
+            onClick={handleBiometric}
+            disabled={unlocking}
+            className="w-[80px] h-[80px] rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center hover:bg-primary/20 active:scale-95 transition-all duration-100 mx-auto"
+          >
+            <Fingerprint className="h-7 w-7" />
+          </button>
+        ) : (
+          <div />
+        )}
         <button
           onClick={() => handleDigit('0')}
           className="w-[80px] h-[80px] rounded-full bg-card/60 backdrop-blur-sm border border-border/40 text-foreground flex items-center justify-center hover:bg-secondary active:bg-muted active:scale-95 transition-all duration-100 mx-auto"
@@ -103,6 +206,12 @@ export default function PinLock() {
           <Delete className="h-6 w-6" />
         </button>
       </div>
+
+      {biometric.available && (
+        <p className="text-[10px] text-muted-foreground/60 mt-5">
+          Tap 👆 for fingerprint / face unlock
+        </p>
+      )}
     </div>
   );
 }
