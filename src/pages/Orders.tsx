@@ -23,7 +23,7 @@ function OrderFormDialog({ order, onSave, trigger }: {
   const [address, setAddress] = useState(order?.deliveryAddress || '');
   const [deliveryFee, setDeliveryFee] = useState(order?.deliveryFee || 0);
   const [isPaid, setIsPaid] = useState(order?.isPaid || false);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile_money' | ''>(order?.paymentMethod || '');
+  const [paymentMethod, setPaymentMethod] = useState<string>(order?.paymentMethod || '');
   const [items, setItems] = useState<Record<string, number>>(() => {
     if (!order) return {};
     const map: Record<string, number> = {};
@@ -66,7 +66,7 @@ function OrderFormDialog({ order, onSave, trigger }: {
       deliveryAddress: address || undefined, deliveryFee,
       items: orderItems, status: order?.status || 'pending',
       totalAmount: subtotal + deliveryFee, notes: notes || undefined,
-      isPaid, paymentMethod: paymentMethod || undefined,
+      isPaid, paymentMethod: (paymentMethod || undefined) as Order['paymentMethod'],
     });
     if (!order) { setName(''); setPhone(''); setAddress(''); setDeliveryFee(0); setItems({}); setNotes(''); setIsPaid(false); setPaymentMethod(''); }
     setOpen(false);
@@ -103,16 +103,24 @@ function OrderFormDialog({ order, onSave, trigger }: {
                 {isPaid ? '✅ Paid' : '❌ Unpaid'}
               </button>
               {isPaid && (
-                <>
+                <div className="flex flex-wrap gap-1.5">
                   <button type="button" onClick={() => setPaymentMethod('cash')}
                     className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${paymentMethod === 'cash' ? 'gradient-berry text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
                     💵 Cash
                   </button>
-                  <button type="button" onClick={() => setPaymentMethod('mobile_money')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${paymentMethod === 'mobile_money' ? 'gradient-berry text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
-                    📱 Mobile Money
+                  <button type="button" onClick={() => setPaymentMethod('orange_money')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${paymentMethod === 'orange_money' ? 'gradient-berry text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                    🟠 OM
                   </button>
-                </>
+                  <button type="button" onClick={() => setPaymentMethod('afrimoney')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${paymentMethod === 'afrimoney' ? 'gradient-berry text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                    📱 AM
+                  </button>
+                  <button type="button" onClick={() => setPaymentMethod('qmoney')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${paymentMethod === 'qmoney' ? 'gradient-berry text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                    💜 QMoney
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -426,7 +434,7 @@ export default function OrdersPage() {
                   onClick={() => updateOrder(order.id, { isPaid: !order.isPaid, paymentMethod: !order.isPaid ? (order.paymentMethod || 'cash') : order.paymentMethod })}
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${order.isPaid ? 'bg-success/20 text-success' : 'bg-destructive/15 text-destructive'}`}
                 >
-                  {order.isPaid ? `✅ ${order.paymentMethod === 'mobile_money' ? '📱 MoMo' : '💵 Cash'}` : '❌ Unpaid'}
+                  {order.isPaid ? `✅ ${order.paymentMethod === 'orange_money' ? '🟠 OM' : order.paymentMethod === 'afrimoney' ? '📱 AM' : order.paymentMethod === 'qmoney' ? '💜 QMoney' : '💵 Cash'}` : '❌ Unpaid'}
                 </button>
               </div>
             </div>

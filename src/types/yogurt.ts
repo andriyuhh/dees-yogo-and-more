@@ -31,7 +31,7 @@ export interface Order {
   createdAt: string;
   notes?: string;
   isPaid: boolean;
-  paymentMethod?: 'cash' | 'mobile_money';
+  paymentMethod?: 'cash' | 'orange_money' | 'afrimoney' | 'qmoney';
 }
 
 export interface OrderItem {
