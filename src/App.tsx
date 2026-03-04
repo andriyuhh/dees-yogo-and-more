@@ -9,6 +9,7 @@ import { SettingsProvider, useSettings } from "@/hooks/useSettings";
 import AppLayout from "./components/AppLayout";
 import PinLock from "./components/PinLock";
 import BackupReminder from "./components/BackupReminder";
+import InstallPrompt from "./components/InstallPrompt";
 import Index from "./pages/Index";
 import Orders from "./pages/Orders";
 import Inventory from "./pages/Inventory";
@@ -79,6 +80,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <InstallPrompt />
           {showSplash && <SplashScreen onFinish={hideSplash} />}
           <BrowserRouter>
             <AppRoutes />
