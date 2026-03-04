@@ -1,15 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
-import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2, FileDown } from 'lucide-react';
+import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2, FileDown, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import logoImg from '@/assets/logo.jpg';
 import type { Order, OrderItem } from '@/types/yogurt';
+
+type DatePreset = 'all' | 'today' | 'week' | 'month' | 'custom';
 
 function OrderFormDialog({ order, onSave, trigger }: {
   order?: Order;
@@ -382,7 +388,33 @@ export default function OrdersPage() {
   const { orders, addOrder, updateOrder, deleteOrder, updateOrderStatus, loading } = useYogurtStore();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
-  const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
+  const [datePreset, setDatePreset] = useState<DatePreset>('all');
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
+
+  const dateFiltered = useMemo(() => {
+    if (datePreset === 'all') return orders;
+    const now = new Date();
+    let start: Date, end: Date;
+    if (datePreset === 'today') {
+      start = startOfDay(now); end = endOfDay(now);
+    } else if (datePreset === 'week') {
+      start = startOfWeek(now, { weekStartsOn: 1 }); end = endOfWeek(now, { weekStartsOn: 1 });
+    } else if (datePreset === 'month') {
+      start = startOfMonth(now); end = endOfMonth(now);
+    } else {
+      // custom
+      if (!customFrom) return orders;
+      start = startOfDay(customFrom);
+      end = customTo ? endOfDay(customTo) : endOfDay(customFrom);
+    }
+    return orders.filter(o => {
+      const d = new Date(o.createdAt);
+      return isWithinInterval(d, { start, end });
+    });
+  }, [orders, datePreset, customFrom, customTo]);
+
+  const filtered = filter === 'all' ? dateFiltered : dateFiltered.filter(o => o.status === filter);
 
   if (loading) {
     return (
@@ -406,6 +438,51 @@ export default function OrdersPage() {
         />
       </div>
 
+      {/* Date filter presets */}
+      <div className="flex flex-wrap gap-1.5 mb-2 animate-slide-up">
+        {([
+          { key: 'all', label: '📅 All Time' },
+          { key: 'today', label: '📌 Today' },
+          { key: 'week', label: '📆 This Week' },
+          { key: 'month', label: '🗓️ This Month' },
+          { key: 'custom', label: '🔍 Custom' },
+        ] as { key: DatePreset; label: string }[]).map(p => (
+          <button key={p.key} onClick={() => setDatePreset(p.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${datePreset === p.key ? 'gradient-berry text-primary-foreground shadow-md scale-105' : 'bg-secondary text-secondary-foreground hover:scale-105'}`}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Custom date range picker */}
+      {datePreset === 'custom' && (
+        <div className="flex gap-2 mb-3 animate-fade-in">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("text-xs rounded-xl flex-1 justify-start", !customFrom && "text-muted-foreground")}>
+                <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                {customFrom ? format(customFrom, 'dd MMM yyyy') : 'From'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} initialFocus className={cn("p-3 pointer-events-auto")} />
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("text-xs rounded-xl flex-1 justify-start", !customTo && "text-muted-foreground")}>
+                <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                {customTo ? format(customTo, 'dd MMM yyyy') : 'To'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={customTo} onSelect={setCustomTo} disabled={(d) => customFrom ? d < customFrom : false} initialFocus className={cn("p-3 pointer-events-auto")} />
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+
+      {/* Status filter */}
       <div className="flex gap-2 mb-4 animate-slide-up">
         {(['all', 'pending', 'completed'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
@@ -414,6 +491,9 @@ export default function OrdersPage() {
           </button>
         ))}
       </div>
+
+      {/* Order count summary */}
+      <p className="text-xs text-muted-foreground mb-2">{filtered.length} order{filtered.length !== 1 ? 's' : ''} found</p>
 
       <div className="space-y-3">
         {filtered.map((order, i) => (
