@@ -24,14 +24,16 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
       },
       manifest: {
-        name: "Yogurt Tracker",
-        short_name: "YogurtTracker",
+        name: "Dee's Yogo & More",
+        short_name: "Dee's Yogo",
         description: "Track sales, orders, inventory and profits for your yogurt business",
         theme_color: "#c2185b",
         background_color: "#faf5f0",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",
+        scope: "/",
+        categories: ["business", "productivity"],
         icons: [
           {
             src: "/pwa-192x192.png",
