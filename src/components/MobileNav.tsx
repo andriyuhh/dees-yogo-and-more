@@ -7,7 +7,7 @@ const tabs = [
   { to: '/inventory', icon: Package, label: 'Stock' },
   { to: '/expenses', icon: Receipt, label: 'Expenses' },
   { to: '/customers', icon: Users, label: 'CRM' },
-  { to: '/sales', icon: TrendingUp, label: 'Sales' },
+  { to: '/notes', icon: StickyNote, label: 'Notes' },
   { to: '/settings', icon: Settings, label: 'More' },
 ];
 

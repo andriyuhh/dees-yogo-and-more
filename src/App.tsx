@@ -63,6 +63,7 @@ function AppContent() {
           <Route path="/sales" element={<Sales />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/notes" element={<Notes />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="*" element={<NotFound />} />
