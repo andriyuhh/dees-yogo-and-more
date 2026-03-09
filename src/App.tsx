@@ -17,6 +17,7 @@ import Sales from "./pages/Sales";
 import Customers from "./pages/Customers";
 import Expenses from "./pages/Expenses";
 import Settings from "./pages/Settings";
+import Notes from "./pages/Notes";
 import AuthPage from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
