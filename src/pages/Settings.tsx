@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NavLink as RouterNavLink } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useBiometricAuth } from '@/components/PinLock';
@@ -6,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint } from 'lucide-react';
+import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
