@@ -1,5 +1,5 @@
 import { NavLink as RouterNavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, TrendingUp, Users, Settings, Receipt } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, TrendingUp, Users, Settings, Receipt, StickyNote } from 'lucide-react';
 
 const tabs = [
   { to: '/', icon: LayoutDashboard, label: 'Home' },
