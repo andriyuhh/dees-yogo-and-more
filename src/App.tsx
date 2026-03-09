@@ -17,6 +17,7 @@ import Sales from "./pages/Sales";
 import Customers from "./pages/Customers";
 import Expenses from "./pages/Expenses";
 import Settings from "./pages/Settings";
+import Notes from "./pages/Notes";
 import AuthPage from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
@@ -62,6 +63,7 @@ function AppContent() {
           <Route path="/sales" element={<Sales />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/notes" element={<Notes />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="*" element={<NotFound />} />
