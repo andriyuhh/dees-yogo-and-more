@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NavLink as RouterNavLink } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useBiometricAuth } from '@/components/PinLock';
@@ -6,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint } from 'lucide-react';
+import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
@@ -124,8 +125,17 @@ export default function SettingsPage() {
           <Shield className="h-4 w-4 text-success" />
         </div>
 
+        {/* Sales & Reports */}
+        <RouterNavLink to="/sales" className="card-playful w-full flex items-center gap-3 animate-slide-up no-underline" style={{ animationDelay: '200ms' }}>
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <div>
+            <p className="font-bold text-sm">Sales & Reports</p>
+            <p className="text-xs text-muted-foreground">View sales history, trends & analytics</p>
+          </div>
+        </RouterNavLink>
+
         {/* Sign Out */}
-        <button onClick={signOut} className="card-playful w-full text-left flex items-center gap-3 animate-slide-up" style={{ animationDelay: '200ms' }}>
+        <button onClick={signOut} className="card-playful w-full text-left flex items-center gap-3 animate-slide-up" style={{ animationDelay: '250ms' }}>
           <LogOut className="h-5 w-5 text-destructive" />
           <div>
             <p className="font-bold text-sm text-destructive">Sign Out</p>
