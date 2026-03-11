@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSettings } from '@/hooks/useSettings';
 import { ShieldCheck, Delete, Fingerprint } from 'lucide-react';
-import logo from '@/assets/logo.jpg';
+import logo from '@/assets/logo.png';
 
 // Biometric hook that uses platform authenticator directly (no Google passkey)
 function useBiometricAuth() {

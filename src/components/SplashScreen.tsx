@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import logo from '@/assets/logo.jpg';
+import logo from '@/assets/logo.png';
 
 export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const [phase, setPhase] = useState<'enter' | 'hold' | 'exit'>('enter');

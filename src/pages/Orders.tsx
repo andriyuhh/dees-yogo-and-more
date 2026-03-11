@@ -12,7 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
-import logoImg from '@/assets/logo.jpg';
+import logoImg from '@/assets/logo.png';
 import type { Order, OrderItem } from '@/types/yogurt';
 
 type DatePreset = 'all' | 'today' | 'week' | 'month' | 'custom';
