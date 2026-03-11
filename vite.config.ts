@@ -36,14 +36,14 @@ export default defineConfig(({ mode }) => ({
         categories: ["business", "productivity"],
         icons: [
           {
-            src: "/pwa-logo.jpg",
+            src: "/pwa-logo.png",
             sizes: "192x192",
-            type: "image/jpeg",
+            type: "image/png",
           },
           {
-            src: "/pwa-logo.jpg",
+            src: "/pwa-logo.png",
             sizes: "512x512",
-            type: "image/jpeg",
+            type: "image/png",
             purpose: "any maskable",
           },
         ],
