@@ -3,7 +3,7 @@ import { useYogurtStore } from '@/hooks/useYogurtStore';
 import { useSettings } from '@/hooks/useSettings';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import logo from '@/assets/logo.jpg';
+import logo from '@/assets/logo.png';
 
 const CHART_COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--accent))'];
 
