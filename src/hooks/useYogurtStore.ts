@@ -254,15 +254,16 @@ export function useYogurtStore() {
   const resetData = useCallback(async (opts: ResetOptions) => {
     if (!user) return;
     const uid = user.id;
-    const tasks: Promise<any>[] = [];
-    if (opts.orders) tasks.push(supabase.from('orders').delete().eq('user_id', uid));
-    if (opts.sales) tasks.push(supabase.from('sales').delete().eq('user_id', uid));
-    if (opts.customers) tasks.push(supabase.from('customers').delete().eq('user_id', uid));
-    if (opts.expenses) tasks.push(supabase.from('expenses').delete().eq('user_id', uid));
-    if (opts.notes) tasks.push(supabase.from('notes').delete().eq('user_id', uid));
-    if (opts.flavors) tasks.push(supabase.from('flavors').delete().eq('user_id', uid));
-    else if (opts.resetFlavorStock) tasks.push(supabase.from('flavors').update({ stock: 0 }).eq('user_id', uid));
+    const tasks: PromiseLike<any>[] = [];
+    if (opts.orders) tasks.push(supabase.from('orders').delete().eq('user_id', uid).then(r => r));
+    if (opts.sales) tasks.push(supabase.from('sales').delete().eq('user_id', uid).then(r => r));
+    if (opts.customers) tasks.push(supabase.from('customers').delete().eq('user_id', uid).then(r => r));
+    if (opts.expenses) tasks.push(supabase.from('expenses').delete().eq('user_id', uid).then(r => r));
+    if (opts.notes) tasks.push(supabase.from('notes').delete().eq('user_id', uid).then(r => r));
+    if (opts.flavors) tasks.push(supabase.from('flavors').delete().eq('user_id', uid).then(r => r));
+    else if (opts.resetFlavorStock) tasks.push(supabase.from('flavors').update({ stock: 0 }).eq('user_id', uid).then(r => r));
     await Promise.all(tasks);
+
     if (opts.orders) setOrders([]);
     if (opts.sales) setSales([]);
     if (opts.customers) setCustomers([]);
