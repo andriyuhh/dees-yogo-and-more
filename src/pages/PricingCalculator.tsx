@@ -5,19 +5,41 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, Calculator, TrendingUp, Lightbulb, Save } from 'lucide-react';
+import { ArrowLeft, Calculator, TrendingUp, Lightbulb, Save, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+
+type MarginMode = 'markup' | 'margin';
+
+const DEFAULTS = {
+  ingredientCost: 0,
+  packagingCost: 0,
+  laborMinutes: 0,
+  hourlyRate: 0,
+  overheadPct: 10,
+  marginPct: 50,
+  marginMode: 'markup' as MarginMode,
+  roundTo: 5,
+};
+
+// Safely parse a numeric input — never NaN, never negative
+const num = (v: string) => {
+  const n = parseFloat(v);
+  if (!isFinite(n) || n < 0) return 0;
+  return n;
+};
 
 export default function PricingCalculator() {
   const navigate = useNavigate();
   const { flavors, updateFlavor } = useYogurtStore();
 
-  const [ingredientCost, setIngredientCost] = useState(0);
-  const [packagingCost, setPackagingCost] = useState(0);
-  const [laborMinutes, setLaborMinutes] = useState(0);
-  const [hourlyRate, setHourlyRate] = useState(0);
-  const [overheadPct, setOverheadPct] = useState(10);
-  const [marginPct, setMarginPct] = useState(50);
+  const [ingredientCost, setIngredientCost] = useState(DEFAULTS.ingredientCost);
+  const [packagingCost, setPackagingCost] = useState(DEFAULTS.packagingCost);
+  const [laborMinutes, setLaborMinutes] = useState(DEFAULTS.laborMinutes);
+  const [hourlyRate, setHourlyRate] = useState(DEFAULTS.hourlyRate);
+  const [overheadPct, setOverheadPct] = useState(DEFAULTS.overheadPct);
+  const [marginPct, setMarginPct] = useState(DEFAULTS.marginPct);
+  const [marginMode, setMarginMode] = useState<MarginMode>(DEFAULTS.marginMode);
+  const [roundTo, setRoundTo] = useState(DEFAULTS.roundTo);
   const [applyToFlavorId, setApplyToFlavorId] = useState<string>('');
 
   const calc = useMemo(() => {
@@ -25,37 +47,81 @@ export default function PricingCalculator() {
     const directCost = ingredientCost + packagingCost + laborCost;
     const overheadCost = directCost * (overheadPct / 100);
     const totalCost = directCost + overheadCost;
-    const profit = totalCost * (marginPct / 100);
-    const suggestedPrice = totalCost + profit;
-    const roundedPrice = Math.ceil(suggestedPrice / 5) * 5; // round up to nearest Le 5
-    return { laborCost, directCost, overheadCost, totalCost, profit, suggestedPrice, roundedPrice };
-  }, [ingredientCost, packagingCost, laborMinutes, hourlyRate, overheadPct, marginPct]);
+
+    let suggestedPrice: number;
+    if (marginMode === 'margin') {
+      // Margin = profit / price → price = cost / (1 - margin%)
+      const m = Math.min(marginPct, 99) / 100; // cap to avoid div-by-zero
+      suggestedPrice = totalCost / (1 - m);
+    } else {
+      // Markup = profit / cost → price = cost * (1 + markup%)
+      suggestedPrice = totalCost * (1 + marginPct / 100);
+    }
+
+    const profit = suggestedPrice - totalCost;
+    const step = roundTo > 0 ? roundTo : 1;
+    const roundedPrice = Math.ceil(suggestedPrice / step) * step;
+    const roundedProfit = roundedPrice - totalCost;
+    const effectiveMargin = roundedPrice > 0 ? (roundedProfit / roundedPrice) * 100 : 0;
+    const effectiveMarkup = totalCost > 0 ? (roundedProfit / totalCost) * 100 : 0;
+
+    return {
+      laborCost, directCost, overheadCost, totalCost,
+      profit, suggestedPrice, roundedPrice, roundedProfit,
+      effectiveMargin, effectiveMarkup,
+    };
+  }, [ingredientCost, packagingCost, laborMinutes, hourlyRate, overheadPct, marginPct, marginMode, roundTo]);
 
   const handleApply = () => {
     if (!applyToFlavorId) {
       toast.error('Pick a flavor to apply this price to');
       return;
     }
-    updateFlavor(applyToFlavorId, { costPerUnit: calc.totalCost, pricePerUnit: calc.roundedPrice });
+    if (calc.totalCost <= 0) {
+      toast.error('Enter some costs first');
+      return;
+    }
+    updateFlavor(applyToFlavorId, {
+      costPerUnit: Number(calc.totalCost.toFixed(2)),
+      pricePerUnit: calc.roundedPrice,
+    });
     toast.success('Price applied to flavor! 🎉');
   };
 
-  const tip = marginPct < 30
-    ? 'Margin is low — consider raising it for sustainability.'
-    : marginPct > 100
-    ? 'Very high margin — make sure competitors aren\'t much cheaper.'
+  const handleClearAll = () => {
+    setIngredientCost(DEFAULTS.ingredientCost);
+    setPackagingCost(DEFAULTS.packagingCost);
+    setLaborMinutes(DEFAULTS.laborMinutes);
+    setHourlyRate(DEFAULTS.hourlyRate);
+    setOverheadPct(DEFAULTS.overheadPct);
+    setMarginPct(DEFAULTS.marginPct);
+    setMarginMode(DEFAULTS.marginMode);
+    setRoundTo(DEFAULTS.roundTo);
+    setApplyToFlavorId('');
+    toast.success('Cleared all entries 🧹');
+  };
+
+  const tip = calc.effectiveMargin < 20
+    ? 'Margin is thin — small cost increases could wipe profit.'
+    : calc.effectiveMargin > 60
+    ? 'Very high margin — double-check it stays competitive.'
     : 'Healthy margin for a small home business!';
 
   return (
     <div className="px-4 pt-6 pb-28 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4 animate-fade-in">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-card border border-border">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-2xl font-extrabold flex items-center gap-2">
-          <Calculator className="h-6 w-6 text-primary" /> Pricing Calculator
-        </h1>
+      <div className="flex items-center justify-between gap-3 mb-4 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-card border border-border" aria-label="Back">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-2xl font-extrabold flex items-center gap-2">
+            <Calculator className="h-6 w-6 text-primary" /> Pricing
+          </h1>
+        </div>
+        <Button onClick={handleClearAll} variant="outline" size="sm" className="rounded-full text-xs gap-1.5">
+          <RotateCcw className="h-3.5 w-3.5" /> Clear All
+        </Button>
       </div>
 
       <p className="text-xs text-muted-foreground mb-5 animate-fade-in">
@@ -68,20 +134,20 @@ export default function PricingCalculator() {
         <div className="space-y-3">
           <div>
             <Label className="text-xs">Ingredients cost (Le)</Label>
-            <Input type="number" min={0} value={ingredientCost || ''} onChange={e => setIngredientCost(+e.target.value)} placeholder="e.g. milk, sugar, fruit..." />
+            <Input type="number" min={0} step="any" inputMode="decimal" value={ingredientCost || ''} onChange={e => setIngredientCost(num(e.target.value))} placeholder="e.g. milk, sugar, fruit..." />
           </div>
           <div>
             <Label className="text-xs">Packaging cost (Le)</Label>
-            <Input type="number" min={0} value={packagingCost || ''} onChange={e => setPackagingCost(+e.target.value)} placeholder="Cup, lid, spoon..." />
+            <Input type="number" min={0} step="any" inputMode="decimal" value={packagingCost || ''} onChange={e => setPackagingCost(num(e.target.value))} placeholder="Cup, lid, spoon..." />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-xs">Labor time (min)</Label>
-              <Input type="number" min={0} value={laborMinutes || ''} onChange={e => setLaborMinutes(+e.target.value)} placeholder="0" />
+              <Input type="number" min={0} step="any" inputMode="decimal" value={laborMinutes || ''} onChange={e => setLaborMinutes(num(e.target.value))} placeholder="0" />
             </div>
             <div>
-              <Label className="text-xs">Your hourly rate (Le)</Label>
-              <Input type="number" min={0} value={hourlyRate || ''} onChange={e => setHourlyRate(+e.target.value)} placeholder="0" />
+              <Label className="text-xs">Hourly rate (Le)</Label>
+              <Input type="number" min={0} step="any" inputMode="decimal" value={hourlyRate || ''} onChange={e => setHourlyRate(num(e.target.value))} placeholder="0" />
             </div>
           </div>
         </div>
@@ -96,14 +162,48 @@ export default function PricingCalculator() {
               <Label className="text-xs">Overhead (rent, utilities, etc.)</Label>
               <span className="text-xs font-bold text-primary">{overheadPct}%</span>
             </div>
-            <Slider value={[overheadPct]} onValueChange={v => setOverheadPct(v[0])} max={50} step={1} />
+            <Slider value={[overheadPct]} onValueChange={v => setOverheadPct(v[0])} max={100} step={1} />
           </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <Label className="text-xs">{marginMode === 'markup' ? 'Markup (on cost)' : 'Margin (on price)'}</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-primary">{marginPct}%</span>
+                <div className="flex rounded-full bg-secondary p-0.5 text-[10px] font-bold">
+                  <button
+                    onClick={() => setMarginMode('markup')}
+                    className={`px-2 py-0.5 rounded-full transition-all ${marginMode === 'markup' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                  >Markup</button>
+                  <button
+                    onClick={() => setMarginMode('margin')}
+                    className={`px-2 py-0.5 rounded-full transition-all ${marginMode === 'margin' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                  >Margin</button>
+                </div>
+              </div>
+            </div>
+            <Slider
+              value={[marginPct]}
+              onValueChange={v => setMarginPct(v[0])}
+              max={marginMode === 'margin' ? 95 : 300}
+              step={5}
+            />
+          </div>
+
           <div>
             <div className="flex justify-between mb-2">
-              <Label className="text-xs">Profit margin</Label>
-              <span className="text-xs font-bold text-primary">{marginPct}%</span>
+              <Label className="text-xs">Round price up to nearest</Label>
+              <span className="text-xs font-bold text-primary">Le {roundTo}</span>
             </div>
-            <Slider value={[marginPct]} onValueChange={v => setMarginPct(v[0])} max={150} step={5} />
+            <div className="flex gap-2">
+              {[1, 5, 10, 50, 100].map(r => (
+                <button
+                  key={r}
+                  onClick={() => setRoundTo(r)}
+                  className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all ${roundTo === r ? 'gradient-berry text-primary-foreground shadow-md' : 'bg-secondary text-secondary-foreground'}`}
+                >{r}</button>
+              ))}
+            </div>
           </div>
         </div>
         <div className="mt-3 p-2 rounded-lg bg-warning/10 border border-warning/30 flex items-start gap-2">
@@ -118,12 +218,16 @@ export default function PricingCalculator() {
         <div className="space-y-1.5 text-sm">
           <Row label="Ingredients" value={ingredientCost} />
           <Row label="Packaging" value={packagingCost} />
-          <Row label="Labor" value={calc.laborCost} />
-          <Row label="Overhead" value={calc.overheadCost} />
+          <Row label={`Labor (${laborMinutes} min @ Le ${hourlyRate}/hr)`} value={calc.laborCost} />
+          <Row label={`Overhead (${overheadPct}%)`} value={calc.overheadCost} />
           <div className="border-t border-border pt-1.5 mt-1.5">
             <Row label="Total cost" value={calc.totalCost} bold />
           </div>
-          <Row label={`Profit (${marginPct}%)`} value={calc.profit} muted />
+          <Row label="Profit (rounded)" value={calc.roundedProfit} muted />
+          <div className="flex justify-between text-xs text-muted-foreground pt-1">
+            <span>Effective margin / markup</span>
+            <span>{calc.effectiveMargin.toFixed(1)}% / {calc.effectiveMarkup.toFixed(1)}%</span>
+          </div>
         </div>
       </div>
 
@@ -135,7 +239,7 @@ export default function PricingCalculator() {
         </div>
         <p className="text-4xl font-extrabold">Le {calc.roundedPrice.toLocaleString()}</p>
         <p className="text-xs opacity-80 mt-1">
-          Exact: Le {calc.suggestedPrice.toFixed(2)} · rounded up to nearest Le 5
+          Exact: Le {calc.suggestedPrice.toFixed(2)} · rounded up to nearest Le {roundTo}
         </p>
       </div>
 
@@ -161,7 +265,7 @@ export default function PricingCalculator() {
             ))}
           </div>
           <Button onClick={handleApply} disabled={!applyToFlavorId} className="w-full gradient-berry text-primary-foreground rounded-xl">
-            Update flavor price to Le {calc.roundedPrice}
+            Update flavor price to Le {calc.roundedPrice.toLocaleString()}
           </Button>
         </div>
       )}
