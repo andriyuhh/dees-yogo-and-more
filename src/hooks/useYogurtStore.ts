@@ -281,6 +281,6 @@ export function useYogurtStore() {
     addSale, updateStock, addFlavor, updateFlavor, deleteFlavor,
     addExpense, deleteExpense,
     upsertCustomer, updateCustomer, deleteCustomer, getCustomerOrders,
-    redeemLoyaltyReward,
+    redeemLoyaltyReward, resetData,
   };
 }
