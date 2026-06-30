@@ -3,12 +3,16 @@ import { NavLink as RouterNavLink } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useBiometricAuth } from '@/components/PinLock';
+import { useYogurtStore } from '@/hooks/useYogurtStore';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint, TrendingUp, Calculator } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint, TrendingUp, Calculator, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+
 
 export default function SettingsPage() {
   const { settings, updateSettings, setPin, removePin } = useSettings();
