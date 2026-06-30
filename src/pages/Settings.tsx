@@ -177,7 +177,63 @@ export default function SettingsPage() {
           </div>
         </RouterNavLink>
 
+        {/* Reset Data */}
+        <AlertDialog open={resetOpen} onOpenChange={(o) => { setResetOpen(o); if (!o) setConfirmText(''); }}>
+          <AlertDialogTrigger asChild>
+            <button className="card-playful w-full text-left flex items-center gap-3 animate-slide-up border border-destructive/30" style={{ animationDelay: '240ms' }}>
+              <Trash2 className="h-5 w-5 text-destructive" />
+              <div>
+                <p className="font-bold text-sm text-destructive">Clear All Data</p>
+                <p className="text-xs text-muted-foreground">Reset orders, stock, customers & more</p>
+              </div>
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Start fresh? 🧹</AlertDialogTitle>
+              <AlertDialogDescription>
+                Pick what to wipe. This <strong>cannot be undone</strong>.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2.5 py-2">
+              {[
+                { key: 'orders', label: 'Orders' },
+                { key: 'sales', label: 'Sales history' },
+                { key: 'customers', label: 'Customers (CRM)' },
+                { key: 'expenses', label: 'Expenses' },
+                { key: 'notes', label: 'Notes' },
+                { key: 'resetFlavorStock', label: 'Reset stock to 0 (keep flavors)' },
+                { key: 'flavors', label: 'Delete flavors entirely' },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-3 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={(resetOpts as any)[key]}
+                    onCheckedChange={(v) => setResetOpts(prev => ({
+                      ...prev,
+                      [key]: !!v,
+                      ...(key === 'flavors' && v ? { resetFlavorStock: false } : {}),
+                      ...(key === 'resetFlavorStock' && v ? { flavors: false } : {}),
+                    }))}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="pt-1">
+              <Label className="text-xs">Type <strong>RESET</strong> to confirm</Label>
+              <Input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder="RESET" autoCapitalize="characters" />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={resetting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={(e) => { e.preventDefault(); handleReset(); }} disabled={resetting || confirmText !== 'RESET'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {resetting ? 'Clearing…' : 'Clear data'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Sign Out */}
+
         <button onClick={signOut} className="card-playful w-full text-left flex items-center gap-3 animate-slide-up" style={{ animationDelay: '250ms' }}>
           <LogOut className="h-5 w-5 text-destructive" />
           <div>
