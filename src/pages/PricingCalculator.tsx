@@ -5,23 +5,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, Calculator, TrendingUp, Lightbulb, Save, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Calculator, TrendingUp, Lightbulb, Save, RotateCcw, Plus, Trash2, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 
 type MarginMode = 'markup' | 'margin';
+type Item = { id: string; name: string; cost: number };
+
+const newItem = (): Item => ({ id: crypto.randomUUID(), name: '', cost: 0 });
 
 const DEFAULTS = {
-  ingredientCost: 0,
+  items: [newItem()] as Item[],
+  transportCost: 0,
   packagingCost: 0,
   laborMinutes: 0,
   hourlyRate: 0,
+  unitsProduced: 1,
   overheadPct: 10,
   marginPct: 50,
   marginMode: 'markup' as MarginMode,
   roundTo: 5,
 };
 
-// Safely parse a numeric input — never NaN, never negative
 const num = (v: string) => {
   const n = parseFloat(v);
   if (!isFinite(n) || n < 0) return 0;
@@ -32,10 +36,12 @@ export default function PricingCalculator() {
   const navigate = useNavigate();
   const { flavors, updateFlavor } = useYogurtStore();
 
-  const [ingredientCost, setIngredientCost] = useState(DEFAULTS.ingredientCost);
+  const [items, setItems] = useState<Item[]>(DEFAULTS.items);
+  const [transportCost, setTransportCost] = useState(DEFAULTS.transportCost);
   const [packagingCost, setPackagingCost] = useState(DEFAULTS.packagingCost);
   const [laborMinutes, setLaborMinutes] = useState(DEFAULTS.laborMinutes);
   const [hourlyRate, setHourlyRate] = useState(DEFAULTS.hourlyRate);
+  const [unitsProduced, setUnitsProduced] = useState(DEFAULTS.unitsProduced);
   const [overheadPct, setOverheadPct] = useState(DEFAULTS.overheadPct);
   const [marginPct, setMarginPct] = useState(DEFAULTS.marginPct);
   const [marginMode, setMarginMode] = useState<MarginMode>(DEFAULTS.marginMode);
@@ -43,22 +49,24 @@ export default function PricingCalculator() {
   const [applyToFlavorId, setApplyToFlavorId] = useState<string>('');
 
   const calc = useMemo(() => {
-    const laborCost = (laborMinutes / 60) * hourlyRate;
-    const directCost = ingredientCost + packagingCost + laborCost;
+    const itemsTotal = items.reduce((s, i) => s + (i.cost || 0), 0);
+    const batchCost = itemsTotal + transportCost; // total for whole batch
+    const units = Math.max(1, unitsProduced);
+    const ingredientPerUnit = batchCost / units;
+
+    const laborCost = (laborMinutes / 60) * hourlyRate; // per unit
+    const directCost = ingredientPerUnit + packagingCost + laborCost;
     const overheadCost = directCost * (overheadPct / 100);
     const totalCost = directCost + overheadCost;
 
     let suggestedPrice: number;
     if (marginMode === 'margin') {
-      // Margin = profit / price → price = cost / (1 - margin%)
-      const m = Math.min(marginPct, 99) / 100; // cap to avoid div-by-zero
+      const m = Math.min(marginPct, 99) / 100;
       suggestedPrice = totalCost / (1 - m);
     } else {
-      // Markup = profit / cost → price = cost * (1 + markup%)
       suggestedPrice = totalCost * (1 + marginPct / 100);
     }
 
-    const profit = suggestedPrice - totalCost;
     const step = roundTo > 0 ? roundTo : 1;
     const roundedPrice = Math.ceil(suggestedPrice / step) * step;
     const roundedProfit = roundedPrice - totalCost;
@@ -66,21 +74,24 @@ export default function PricingCalculator() {
     const effectiveMarkup = totalCost > 0 ? (roundedProfit / totalCost) * 100 : 0;
 
     return {
+      itemsTotal, batchCost, ingredientPerUnit,
       laborCost, directCost, overheadCost, totalCost,
-      profit, suggestedPrice, roundedPrice, roundedProfit,
+      suggestedPrice, roundedPrice, roundedProfit,
       effectiveMargin, effectiveMarkup,
     };
-  }, [ingredientCost, packagingCost, laborMinutes, hourlyRate, overheadPct, marginPct, marginMode, roundTo]);
+  }, [items, transportCost, packagingCost, laborMinutes, hourlyRate, unitsProduced, overheadPct, marginPct, marginMode, roundTo]);
+
+  const updateItem = (id: string, patch: Partial<Item>) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
+  };
+  const removeItem = (id: string) => {
+    setItems(prev => prev.length === 1 ? [newItem()] : prev.filter(i => i.id !== id));
+  };
+  const addItem = () => setItems(prev => [...prev, newItem()]);
 
   const handleApply = () => {
-    if (!applyToFlavorId) {
-      toast.error('Pick a flavor to apply this price to');
-      return;
-    }
-    if (calc.totalCost <= 0) {
-      toast.error('Enter some costs first');
-      return;
-    }
+    if (!applyToFlavorId) return toast.error('Pick a flavor to apply this price to');
+    if (calc.totalCost <= 0) return toast.error('Enter some costs first');
     updateFlavor(applyToFlavorId, {
       costPerUnit: Number(calc.totalCost.toFixed(2)),
       pricePerUnit: calc.roundedPrice,
@@ -89,10 +100,12 @@ export default function PricingCalculator() {
   };
 
   const handleClearAll = () => {
-    setIngredientCost(DEFAULTS.ingredientCost);
+    setItems([newItem()]);
+    setTransportCost(DEFAULTS.transportCost);
     setPackagingCost(DEFAULTS.packagingCost);
     setLaborMinutes(DEFAULTS.laborMinutes);
     setHourlyRate(DEFAULTS.hourlyRate);
+    setUnitsProduced(DEFAULTS.unitsProduced);
     setOverheadPct(DEFAULTS.overheadPct);
     setMarginPct(DEFAULTS.marginPct);
     setMarginMode(DEFAULTS.marginMode);
@@ -109,7 +122,6 @@ export default function PricingCalculator() {
 
   return (
     <div className="px-4 pt-6 pb-28 max-w-2xl mx-auto">
-      {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-4 animate-fade-in">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-card border border-border" aria-label="Back">
@@ -125,24 +137,67 @@ export default function PricingCalculator() {
       </div>
 
       <p className="text-xs text-muted-foreground mb-5 animate-fade-in">
-        Enter your real costs and we'll suggest a fair price that covers everything plus your profit. 💡
+        List everything you bought for the batch, add transport, and we'll calculate the fair price per cup. 💡
       </p>
 
-      {/* Cost inputs */}
+      {/* Ingredients list */}
       <div className="card-playful mb-4 animate-slide-up">
-        <h2 className="font-bold text-sm mb-3">💰 Costs per Unit</h2>
-        <div className="space-y-3">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-bold text-sm">🛒 Things you bought (whole batch)</h2>
+          <span className="text-xs font-bold text-primary">Le {calc.itemsTotal.toLocaleString()}</span>
+        </div>
+        <div className="space-y-2">
+          {items.map((it, idx) => (
+            <div key={it.id} className="flex gap-2 items-center">
+              <Input
+                className="flex-1"
+                placeholder={`Item ${idx + 1} (e.g. milk, sugar)`}
+                value={it.name}
+                onChange={e => updateItem(it.id, { name: e.target.value })}
+              />
+              <Input
+                className="w-24"
+                type="number" min={0} step="any" inputMode="decimal"
+                placeholder="Le"
+                value={it.cost || ''}
+                onChange={e => updateItem(it.id, { cost: num(e.target.value) })}
+              />
+              <button onClick={() => removeItem(it.id)} aria-label="Remove" className="p-2 text-muted-foreground hover:text-destructive">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <Button onClick={addItem} variant="outline" size="sm" className="w-full rounded-full mt-3 gap-1.5">
+          <Plus className="h-3.5 w-3.5" /> Add item
+        </Button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <div>
-            <Label className="text-xs">Ingredients cost (Le)</Label>
-            <Input type="number" min={0} step="any" inputMode="decimal" value={ingredientCost || ''} onChange={e => setIngredientCost(num(e.target.value))} placeholder="e.g. milk, sugar, fruit..." />
+            <Label className="text-xs flex items-center gap-1"><Truck className="h-3 w-3" /> Transport (Le)</Label>
+            <Input type="number" min={0} step="any" inputMode="decimal" value={transportCost || ''} onChange={e => setTransportCost(num(e.target.value))} placeholder="0" />
           </div>
           <div>
-            <Label className="text-xs">Packaging cost (Le)</Label>
+            <Label className="text-xs">Units produced</Label>
+            <Input type="number" min={1} step="1" inputMode="numeric" value={unitsProduced || ''} onChange={e => setUnitsProduced(Math.max(1, parseInt(e.target.value) || 1))} placeholder="e.g. 20 cups" />
+          </div>
+        </div>
+        <div className="mt-3 p-2 rounded-lg bg-secondary/50 text-xs flex justify-between">
+          <span className="text-muted-foreground">Batch total ÷ {Math.max(1, unitsProduced)} units</span>
+          <span className="font-bold">Le {calc.ingredientPerUnit.toFixed(2)}/unit</span>
+        </div>
+      </div>
+
+      {/* Per-unit extras */}
+      <div className="card-playful mb-4 animate-slide-up" style={{ animationDelay: '40ms' }}>
+        <h2 className="font-bold text-sm mb-3">📦 Per-unit extras</h2>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Packaging cost per unit (Le)</Label>
             <Input type="number" min={0} step="any" inputMode="decimal" value={packagingCost || ''} onChange={e => setPackagingCost(num(e.target.value))} placeholder="Cup, lid, spoon..." />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Labor time (min)</Label>
+              <Label className="text-xs">Labor time per unit (min)</Label>
               <Input type="number" min={0} step="any" inputMode="decimal" value={laborMinutes || ''} onChange={e => setLaborMinutes(num(e.target.value))} placeholder="0" />
             </div>
             <div>
@@ -153,8 +208,8 @@ export default function PricingCalculator() {
         </div>
       </div>
 
-      {/* Overhead & margin sliders */}
-      <div className="card-playful mb-4 animate-slide-up" style={{ animationDelay: '50ms' }}>
+      {/* Overhead & margin */}
+      <div className="card-playful mb-4 animate-slide-up" style={{ animationDelay: '80ms' }}>
         <h2 className="font-bold text-sm mb-3">📊 Overhead & Profit</h2>
         <div className="space-y-4">
           <div>
@@ -171,23 +226,12 @@ export default function PricingCalculator() {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-primary">{marginPct}%</span>
                 <div className="flex rounded-full bg-secondary p-0.5 text-[10px] font-bold">
-                  <button
-                    onClick={() => setMarginMode('markup')}
-                    className={`px-2 py-0.5 rounded-full transition-all ${marginMode === 'markup' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
-                  >Markup</button>
-                  <button
-                    onClick={() => setMarginMode('margin')}
-                    className={`px-2 py-0.5 rounded-full transition-all ${marginMode === 'margin' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
-                  >Margin</button>
+                  <button onClick={() => setMarginMode('markup')} className={`px-2 py-0.5 rounded-full transition-all ${marginMode === 'markup' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Markup</button>
+                  <button onClick={() => setMarginMode('margin')} className={`px-2 py-0.5 rounded-full transition-all ${marginMode === 'margin' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>Margin</button>
                 </div>
               </div>
             </div>
-            <Slider
-              value={[marginPct]}
-              onValueChange={v => setMarginPct(v[0])}
-              max={marginMode === 'margin' ? 95 : 300}
-              step={5}
-            />
+            <Slider value={[marginPct]} onValueChange={v => setMarginPct(v[0])} max={marginMode === 'margin' ? 95 : 300} step={5} />
           </div>
 
           <div>
@@ -197,11 +241,7 @@ export default function PricingCalculator() {
             </div>
             <div className="flex gap-2">
               {[1, 5, 10, 50, 100].map(r => (
-                <button
-                  key={r}
-                  onClick={() => setRoundTo(r)}
-                  className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all ${roundTo === r ? 'gradient-berry text-primary-foreground shadow-md' : 'bg-secondary text-secondary-foreground'}`}
-                >{r}</button>
+                <button key={r} onClick={() => setRoundTo(r)} className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all ${roundTo === r ? 'gradient-berry text-primary-foreground shadow-md' : 'bg-secondary text-secondary-foreground'}`}>{r}</button>
               ))}
             </div>
           </div>
@@ -213,17 +253,18 @@ export default function PricingCalculator() {
       </div>
 
       {/* Breakdown */}
-      <div className="card-playful mb-4 animate-slide-up" style={{ animationDelay: '100ms' }}>
-        <h2 className="font-bold text-sm mb-3">🧮 Breakdown</h2>
+      <div className="card-playful mb-4 animate-slide-up" style={{ animationDelay: '120ms' }}>
+        <h2 className="font-bold text-sm mb-3">🧮 Per-unit breakdown</h2>
         <div className="space-y-1.5 text-sm">
-          <Row label="Ingredients" value={ingredientCost} />
+          <Row label={`Ingredients (Le ${calc.itemsTotal.toFixed(2)} ÷ ${Math.max(1, unitsProduced)})`} value={calc.itemsTotal / Math.max(1, unitsProduced)} />
+          <Row label={`Transport (Le ${transportCost.toFixed(2)} ÷ ${Math.max(1, unitsProduced)})`} value={transportCost / Math.max(1, unitsProduced)} />
           <Row label="Packaging" value={packagingCost} />
           <Row label={`Labor (${laborMinutes} min @ Le ${hourlyRate}/hr)`} value={calc.laborCost} />
           <Row label={`Overhead (${overheadPct}%)`} value={calc.overheadCost} />
           <div className="border-t border-border pt-1.5 mt-1.5">
-            <Row label="Total cost" value={calc.totalCost} bold />
+            <Row label="Total cost / unit" value={calc.totalCost} bold />
           </div>
-          <Row label="Profit (rounded)" value={calc.roundedProfit} muted />
+          <Row label="Profit / unit (rounded)" value={calc.roundedProfit} muted />
           <div className="flex justify-between text-xs text-muted-foreground pt-1">
             <span>Effective margin / markup</span>
             <span>{calc.effectiveMargin.toFixed(1)}% / {calc.effectiveMarkup.toFixed(1)}%</span>
@@ -235,12 +276,22 @@ export default function PricingCalculator() {
       <div className="gradient-berry rounded-2xl p-5 mb-4 text-primary-foreground animate-bounce-in shadow-lg">
         <div className="flex items-center gap-2 mb-1">
           <TrendingUp className="h-4 w-4 opacity-80" />
-          <p className="text-xs font-bold uppercase tracking-wide opacity-80">Suggested price</p>
+          <p className="text-xs font-bold uppercase tracking-wide opacity-80">Suggested price / unit</p>
         </div>
         <p className="text-4xl font-extrabold">Le {calc.roundedPrice.toLocaleString()}</p>
         <p className="text-xs opacity-80 mt-1">
           Exact: Le {calc.suggestedPrice.toFixed(2)} · rounded up to nearest Le {roundTo}
         </p>
+        <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-white/20 text-xs">
+          <div>
+            <p className="opacity-70">Batch revenue ({unitsProduced} units)</p>
+            <p className="font-bold text-sm">Le {(calc.roundedPrice * Math.max(1, unitsProduced)).toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="opacity-70">Batch profit</p>
+            <p className="font-bold text-sm">Le {(calc.roundedProfit * Math.max(1, unitsProduced)).toLocaleString()}</p>
+          </div>
+        </div>
       </div>
 
       {/* Apply to flavor */}
@@ -251,15 +302,7 @@ export default function PricingCalculator() {
           </h2>
           <div className="flex gap-2 flex-wrap mb-3">
             {flavors.map(f => (
-              <button
-                key={f.id}
-                onClick={() => setApplyToFlavorId(f.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  applyToFlavorId === f.id
-                    ? 'gradient-berry text-primary-foreground shadow-md scale-105'
-                    : 'bg-secondary text-secondary-foreground'
-                }`}
-              >
+              <button key={f.id} onClick={() => setApplyToFlavorId(f.id)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${applyToFlavorId === f.id ? 'gradient-berry text-primary-foreground shadow-md scale-105' : 'bg-secondary text-secondary-foreground'}`}>
                 {f.emoji} {f.name}
               </button>
             ))}
@@ -276,8 +319,8 @@ export default function PricingCalculator() {
 function Row({ label, value, bold, muted }: { label: string; value: number; bold?: boolean; muted?: boolean }) {
   return (
     <div className={`flex justify-between ${bold ? 'font-bold' : ''} ${muted ? 'text-muted-foreground' : ''}`}>
-      <span>{label}</span>
-      <span>Le {value.toFixed(2)}</span>
+      <span className="truncate pr-2">{label}</span>
+      <span className="shrink-0">Le {value.toFixed(2)}</span>
     </div>
   );
 }

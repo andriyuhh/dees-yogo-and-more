@@ -242,6 +242,38 @@ export function useYogurtStore() {
     setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, loyaltyRewardsClaimed: newClaimed } : c));
   }, [customers]);
 
+  type ResetOptions = {
+    orders?: boolean;
+    sales?: boolean;
+    customers?: boolean;
+    expenses?: boolean;
+    notes?: boolean;
+    flavors?: boolean;         // delete flavors entirely
+    resetFlavorStock?: boolean; // keep flavors but set stock to 0
+  };
+  const resetData = useCallback(async (opts: ResetOptions) => {
+    if (!user) return;
+    const uid = user.id;
+    const tasks: PromiseLike<any>[] = [];
+    if (opts.orders) tasks.push(supabase.from('orders').delete().eq('user_id', uid).then(r => r));
+    if (opts.sales) tasks.push(supabase.from('sales').delete().eq('user_id', uid).then(r => r));
+    if (opts.customers) tasks.push(supabase.from('customers').delete().eq('user_id', uid).then(r => r));
+    if (opts.expenses) tasks.push(supabase.from('expenses').delete().eq('user_id', uid).then(r => r));
+    if (opts.notes) tasks.push(supabase.from('notes').delete().eq('user_id', uid).then(r => r));
+    if (opts.flavors) tasks.push(supabase.from('flavors').delete().eq('user_id', uid).then(r => r));
+    else if (opts.resetFlavorStock) tasks.push(supabase.from('flavors').update({ stock: 0 }).eq('user_id', uid).then(r => r));
+    await Promise.all(tasks);
+
+    if (opts.orders) setOrders([]);
+    if (opts.sales) setSales([]);
+    if (opts.customers) setCustomers([]);
+    if (opts.expenses) setExpenses([]);
+    if (opts.flavors) setFlavors([]);
+    else if (opts.resetFlavorStock) setFlavors(prev => prev.map(f => ({ ...f, stock: 0 })));
+  }, [user]);
+
+
+
   return {
     flavors, orders, sales, expenses, customers, loading,
     totalSales, totalExpenses, profit, pendingOrders, lowStockFlavors,
@@ -249,6 +281,6 @@ export function useYogurtStore() {
     addSale, updateStock, addFlavor, updateFlavor, deleteFlavor,
     addExpense, deleteExpense,
     upsertCustomer, updateCustomer, deleteCustomer, getCustomerOrders,
-    redeemLoyaltyReward,
+    redeemLoyaltyReward, resetData,
   };
 }
