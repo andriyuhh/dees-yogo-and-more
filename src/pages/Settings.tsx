@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint, TrendingUp } from 'lucide-react';
+import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint, TrendingUp, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
@@ -131,6 +131,15 @@ export default function SettingsPage() {
           <div>
             <p className="font-bold text-sm">Sales & Reports</p>
             <p className="text-xs text-muted-foreground">View sales history, trends & analytics</p>
+          </div>
+        </RouterNavLink>
+
+        {/* Pricing Calculator */}
+        <RouterNavLink to="/pricing" className="card-playful w-full flex items-center gap-3 animate-slide-up no-underline" style={{ animationDelay: '225ms' }}>
+          <Calculator className="h-5 w-5 text-primary" />
+          <div>
+            <p className="font-bold text-sm">Pricing Calculator</p>
+            <p className="text-xs text-muted-foreground">Smart pricing based on cost + margin</p>
           </div>
         </RouterNavLink>
 
