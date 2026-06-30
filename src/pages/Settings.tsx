@@ -18,9 +18,39 @@ export default function SettingsPage() {
   const { settings, updateSettings, setPin, removePin } = useSettings();
   const { signOut } = useAuth();
   const biometric = useBiometricAuth();
+  const { resetData } = useYogurtStore();
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [showPinForm, setShowPinForm] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [resetOpts, setResetOpts] = useState({
+    orders: true,
+    sales: true,
+    customers: true,
+    expenses: true,
+    notes: false,
+    resetFlavorStock: true,
+    flavors: false,
+  });
+  const [resetting, setResetting] = useState(false);
+
+  const handleReset = async () => {
+    if (confirmText !== 'RESET') return toast.error('Type RESET to confirm');
+    setResetting(true);
+    try {
+      await resetData(resetOpts);
+      toast.success('Data cleared. Fresh start! ✨');
+      setResetOpen(false);
+      setConfirmText('');
+      setTimeout(() => window.location.reload(), 600);
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setResetting(false);
+    }
+  };
+
 
   const handleSetPin = () => {
     if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
