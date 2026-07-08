@@ -579,7 +579,7 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between">
               <p className="font-extrabold text-lg">Le {order.totalAmount.toFixed(2)}</p>
               <div className="flex gap-1.5">
-                <button onClick={() => shareInvoicePDF(order)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share PDF invoice">
+                <button onClick={() => shareInvoicePDF(order, invoiceOpts)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share PDF invoice">
                   <Share2 className="h-3.5 w-3.5" />
                 </button>
                 {order.status === 'pending' && (
