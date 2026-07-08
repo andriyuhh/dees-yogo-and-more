@@ -58,7 +58,7 @@ export default function AuthPage() {
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="dee@yogurt.com"
+                  placeholder="andrea@gulp.com"
                   required
                 />
               </div>
