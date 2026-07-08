@@ -235,6 +235,8 @@ export type Database = {
           dark_mode: boolean
           hide_profit: boolean
           id: string
+          invoice_footer_notes: string
+          invoice_payment_terms: string
           last_backup_reminder: string | null
           pin_hash: string | null
           updated_at: string
@@ -245,6 +247,8 @@ export type Database = {
           dark_mode?: boolean
           hide_profit?: boolean
           id?: string
+          invoice_footer_notes?: string
+          invoice_payment_terms?: string
           last_backup_reminder?: string | null
           pin_hash?: string | null
           updated_at?: string
@@ -255,6 +259,8 @@ export type Database = {
           dark_mode?: boolean
           hide_profit?: boolean
           id?: string
+          invoice_footer_notes?: string
+          invoice_payment_terms?: string
           last_backup_reminder?: string | null
           pin_hash?: string | null
           updated_at?: string

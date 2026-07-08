@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink as RouterNavLink } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,9 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint, TrendingUp, Calculator, Trash2 } from 'lucide-react';
+import { Moon, Lock, Eye, EyeOff, Database, LogOut, Shield, Fingerprint, TrendingUp, Calculator, Trash2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 
@@ -22,6 +23,9 @@ export default function SettingsPage() {
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [showPinForm, setShowPinForm] = useState(false);
+  const [terms, setTerms] = useState(settings.invoicePaymentTerms);
+  const [footer, setFooter] = useState(settings.invoiceFooterNotes);
+  const [savingInvoice, setSavingInvoice] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [resetOpts, setResetOpts] = useState({
@@ -34,6 +38,24 @@ export default function SettingsPage() {
     flavors: false,
   });
   const [resetting, setResetting] = useState(false);
+
+  useEffect(() => {
+    setTerms(settings.invoicePaymentTerms);
+    setFooter(settings.invoiceFooterNotes);
+  }, [settings.invoicePaymentTerms, settings.invoiceFooterNotes]);
+
+  const saveInvoiceSettings = async () => {
+    setSavingInvoice(true);
+    try {
+      await updateSettings({ invoicePaymentTerms: terms, invoiceFooterNotes: footer });
+      toast.success('Invoice settings saved ✨');
+    } catch {
+      toast.error('Could not save');
+    } finally {
+      setSavingInvoice(false);
+    }
+  };
+
 
   const handleReset = async () => {
     if (confirmText !== 'RESET') return toast.error('Type RESET to confirm');
@@ -176,6 +198,45 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground">Smart pricing based on cost + margin</p>
           </div>
         </RouterNavLink>
+
+        {/* Invoice Settings */}
+        <div className="card-playful animate-slide-up" style={{ animationDelay: '230ms' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <FileText className="h-5 w-5 text-primary" />
+            <div>
+              <Label className="font-bold text-sm">Invoice Settings</Label>
+              <p className="text-xs text-muted-foreground">Shown on every PDF & WhatsApp invoice</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs font-semibold">Payment Terms</Label>
+              <Textarea
+                value={terms}
+                onChange={e => setTerms(e.target.value)}
+                placeholder="e.g. Payment due upon receipt. Mobile Money accepted."
+                className="min-h-[70px] mt-1 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Footer Notes</Label>
+              <Textarea
+                value={footer}
+                onChange={e => setFooter(e.target.value)}
+                placeholder="e.g. Thank you for your patronage!"
+                className="min-h-[60px] mt-1 text-sm"
+              />
+            </div>
+            <Button
+              onClick={saveInvoiceSettings}
+              disabled={savingInvoice || (terms === settings.invoicePaymentTerms && footer === settings.invoiceFooterNotes)}
+              size="sm"
+              className="gradient-berry text-primary-foreground rounded-full w-full"
+            >
+              {savingInvoice ? 'Saving…' : 'Save Invoice Settings'}
+            </Button>
+          </div>
+        </div>
 
         {/* Reset Data */}
         <AlertDialog open={resetOpen} onOpenChange={(o) => { setResetOpen(o); if (!o) setConfirmText(''); }}>

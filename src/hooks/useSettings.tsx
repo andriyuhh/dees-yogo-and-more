@@ -7,6 +7,8 @@ interface Settings {
   hideProfit: boolean;
   darkMode: boolean;
   lastBackupReminder: string;
+  invoicePaymentTerms: string;
+  invoiceFooterNotes: string;
 }
 
 interface SettingsContextType {
@@ -38,6 +40,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [settings, setSettings] = useState<Settings>({
     pinHash: null, hideProfit: false, darkMode: false, lastBackupReminder: new Date().toISOString(),
+    invoicePaymentTerms: 'Payment due upon receipt. Mobile Money: Orange Money, AfriMoney, QMoney. Cash accepted on delivery.',
+    invoiceFooterNotes: 'Thank you for choosing GULP by Andrea. For orders & inquiries, reach out on WhatsApp.',
   });
   const [loading, setLoading] = useState(true);
   const [pinLocked, setPinLocked] = useState(false);
@@ -51,6 +55,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           hideProfit: data.hide_profit,
           darkMode: data.dark_mode,
           lastBackupReminder: data.last_backup_reminder,
+          invoicePaymentTerms: (data as any).invoice_payment_terms ?? '',
+          invoiceFooterNotes: (data as any).invoice_footer_notes ?? '',
         });
         if (data.pin_hash) setPinLocked(true);
       }
@@ -79,6 +85,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (updates.darkMode !== undefined) dbUpdates.dark_mode = updates.darkMode;
     if (updates.lastBackupReminder !== undefined) dbUpdates.last_backup_reminder = updates.lastBackupReminder;
     if (updates.pinHash !== undefined) dbUpdates.pin_hash = updates.pinHash;
+    if (updates.invoicePaymentTerms !== undefined) dbUpdates.invoice_payment_terms = updates.invoicePaymentTerms;
+    if (updates.invoiceFooterNotes !== undefined) dbUpdates.invoice_footer_notes = updates.invoiceFooterNotes;
     await supabase.from('user_settings').update(dbUpdates).eq('user_id', user.id);
     setSettings(prev => ({ ...prev, ...updates }));
   }, [user, ensureRow]);

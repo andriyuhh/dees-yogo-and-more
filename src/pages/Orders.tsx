@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
+import { useSettings } from '@/hooks/useSettings';
 import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2, FileDown, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -139,8 +140,10 @@ function OrderFormDialog({ order, onSave, trigger }: {
   );
 }
 
-function generateInvoiceText(order: Order): string {
+function generateInvoiceText(order: Order, opts?: { paymentTerms?: string; footerNotes?: string }): string {
   const itemsSubtotal = order.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const paymentTerms = opts?.paymentTerms?.trim();
+  const footerNotes = opts?.footerNotes?.trim();
   const lines = [
     `*GULP BY ANDREA*`,
     `_"Sip. Smile. Repeat."_`,
@@ -168,9 +171,8 @@ function generateInvoiceText(order: Order): string {
     `   *TOTAL: Le ${order.totalAmount.toFixed(2)}*`,
     `━━━━━━━━━━━━━━━━━`,
     order.notes ? `\n_${order.notes}_` : '',
-    ``,
-    `Thank you for choosing *GULP by Andrea*!`,
-    `We appreciate your patronage.`,
+    paymentTerms ? `\n*Payment Terms*\n${paymentTerms}` : '',
+    footerNotes ? `\n${footerNotes}` : `\nThank you for choosing *GULP by Andrea*!\nWe appreciate your patronage.`,
   ].filter(Boolean).join('\n');
   return lines;
 }
@@ -200,7 +202,7 @@ const BRAND = {
   line: [240, 210, 224] as [number, number, number],
 };
 
-async function generateInvoicePDF(order: Order): Promise<jsPDF> {
+async function generateInvoicePDF(order: Order, opts?: { paymentTerms?: string; footerNotes?: string }): Promise<jsPDF> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -367,17 +369,44 @@ async function generateInvoicePDF(order: Order): Promise<jsPDF> {
     y += 5;
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...BRAND.muted);
-    doc.text(order.notes, margin, y, { maxWidth: contentW });
+    const wrapped = doc.splitTextToSize(order.notes, contentW);
+    doc.text(wrapped, margin, y);
+    y += wrapped.length * 4;
+  }
+
+  // Payment Terms block
+  const paymentTerms = opts?.paymentTerms?.trim();
+  if (paymentTerms) {
+    y += 10;
+    doc.setFillColor(...BRAND.pinkSoft);
+    const termsLines = doc.splitTextToSize(paymentTerms, contentW - 10);
+    const boxH = 10 + termsLines.length * 4;
+    doc.roundedRect(margin, y - 4, contentW, boxH, 2, 2, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...BRAND.pinkDark);
+    doc.text('PAYMENT TERMS', margin + 5, y + 1);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.ink);
+    doc.text(termsLines, margin + 5, y + 7);
+    y += boxH;
   }
 
   // Footer
   const footerY = pageH - 22;
   doc.setDrawColor(...BRAND.line);
   doc.line(margin, footerY - 6, pageW - margin, footerY - 6);
+  const footerNotes = opts?.footerNotes?.trim();
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(...BRAND.pinkDark);
-  doc.text('Thank you for your patronage.', pageW / 2, footerY, { align: 'center' });
+  if (footerNotes) {
+    const fLines = doc.splitTextToSize(footerNotes, pageW - margin * 2);
+    doc.text(fLines, pageW / 2, footerY, { align: 'center' });
+  } else {
+    doc.text('Thank you for your patronage.', pageW / 2, footerY, { align: 'center' });
+  }
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(8);
   doc.setTextColor(...BRAND.muted);
@@ -391,8 +420,8 @@ async function generateInvoicePDF(order: Order): Promise<jsPDF> {
 }
 
 
-async function shareInvoicePDF(order: Order) {
-  const doc = await generateInvoicePDF(order);
+async function shareInvoicePDF(order: Order, invoiceOpts?: { paymentTerms?: string; footerNotes?: string }) {
+  const doc = await generateInvoicePDF(order, invoiceOpts);
   const pdfBlob = doc.output('blob');
   const file = new File([pdfBlob], `Invoice-${order.customerName.replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
 
@@ -402,7 +431,7 @@ async function shareInvoicePDF(order: Order) {
   } else {
     // Fallback: download PDF + open WhatsApp with text
     doc.save(file.name);
-    const text = generateInvoiceText(order);
+    const text = generateInvoiceText(order, invoiceOpts);
     const phone = order.customerPhone.replace(/[^0-9+]/g, '');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   }
@@ -410,6 +439,8 @@ async function shareInvoicePDF(order: Order) {
 
 export default function OrdersPage() {
   const { orders, addOrder, updateOrder, deleteOrder, updateOrderStatus, loading } = useYogurtStore();
+  const { settings } = useSettings();
+  const invoiceOpts = { paymentTerms: settings.invoicePaymentTerms, footerNotes: settings.invoiceFooterNotes };
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   const [datePreset, setDatePreset] = useState<DatePreset>('all');
@@ -548,7 +579,7 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between">
               <p className="font-extrabold text-lg">Le {order.totalAmount.toFixed(2)}</p>
               <div className="flex gap-1.5">
-                <button onClick={() => shareInvoicePDF(order)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share PDF invoice">
+                <button onClick={() => shareInvoicePDF(order, invoiceOpts)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share PDF invoice">
                   <Share2 className="h-3.5 w-3.5" />
                 </button>
                 {order.status === 'pending' && (
