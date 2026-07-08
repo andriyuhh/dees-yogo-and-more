@@ -7,6 +7,8 @@ interface Settings {
   hideProfit: boolean;
   darkMode: boolean;
   lastBackupReminder: string;
+  invoicePaymentTerms: string;
+  invoiceFooterNotes: string;
 }
 
 interface SettingsContextType {
