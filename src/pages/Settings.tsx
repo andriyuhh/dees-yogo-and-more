@@ -23,6 +23,9 @@ export default function SettingsPage() {
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [showPinForm, setShowPinForm] = useState(false);
+  const [terms, setTerms] = useState(settings.invoicePaymentTerms);
+  const [footer, setFooter] = useState(settings.invoiceFooterNotes);
+  const [savingInvoice, setSavingInvoice] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [resetOpts, setResetOpts] = useState({
