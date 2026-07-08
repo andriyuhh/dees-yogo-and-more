@@ -201,7 +201,7 @@ const BRAND = {
   line: [240, 210, 224] as [number, number, number],
 };
 
-async function generateInvoicePDF(order: Order): Promise<jsPDF> {
+async function generateInvoicePDF(order: Order, opts?: { paymentTerms?: string; footerNotes?: string }): Promise<jsPDF> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
