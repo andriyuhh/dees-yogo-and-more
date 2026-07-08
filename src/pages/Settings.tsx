@@ -199,6 +199,45 @@ export default function SettingsPage() {
           </div>
         </RouterNavLink>
 
+        {/* Invoice Settings */}
+        <div className="card-playful animate-slide-up" style={{ animationDelay: '230ms' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <FileText className="h-5 w-5 text-primary" />
+            <div>
+              <Label className="font-bold text-sm">Invoice Settings</Label>
+              <p className="text-xs text-muted-foreground">Shown on every PDF & WhatsApp invoice</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs font-semibold">Payment Terms</Label>
+              <Textarea
+                value={terms}
+                onChange={e => setTerms(e.target.value)}
+                placeholder="e.g. Payment due upon receipt. Mobile Money accepted."
+                className="min-h-[70px] mt-1 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Footer Notes</Label>
+              <Textarea
+                value={footer}
+                onChange={e => setFooter(e.target.value)}
+                placeholder="e.g. Thank you for your patronage!"
+                className="min-h-[60px] mt-1 text-sm"
+              />
+            </div>
+            <Button
+              onClick={saveInvoiceSettings}
+              disabled={savingInvoice || (terms === settings.invoicePaymentTerms && footer === settings.invoiceFooterNotes)}
+              size="sm"
+              className="gradient-berry text-primary-foreground rounded-full w-full"
+            >
+              {savingInvoice ? 'Saving…' : 'Save Invoice Settings'}
+            </Button>
+          </div>
+        </div>
+
         {/* Reset Data */}
         <AlertDialog open={resetOpen} onOpenChange={(o) => { setResetOpen(o); if (!o) setConfirmText(''); }}>
           <AlertDialogTrigger asChild>
