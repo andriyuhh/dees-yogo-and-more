@@ -438,6 +438,8 @@ async function shareInvoicePDF(order: Order, invoiceOpts?: { paymentTerms?: stri
 
 export default function OrdersPage() {
   const { orders, addOrder, updateOrder, deleteOrder, updateOrderStatus, loading } = useYogurtStore();
+  const { settings } = useSettings();
+  const invoiceOpts = { paymentTerms: settings.invoicePaymentTerms, footerNotes: settings.invoiceFooterNotes };
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   const [datePreset, setDatePreset] = useState<DatePreset>('all');
