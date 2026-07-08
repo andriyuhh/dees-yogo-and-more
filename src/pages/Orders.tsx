@@ -139,8 +139,10 @@ function OrderFormDialog({ order, onSave, trigger }: {
   );
 }
 
-function generateInvoiceText(order: Order): string {
+function generateInvoiceText(order: Order, opts?: { paymentTerms?: string; footerNotes?: string }): string {
   const itemsSubtotal = order.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const paymentTerms = opts?.paymentTerms?.trim();
+  const footerNotes = opts?.footerNotes?.trim();
   const lines = [
     `*GULP BY ANDREA*`,
     `_"Sip. Smile. Repeat."_`,
@@ -168,9 +170,8 @@ function generateInvoiceText(order: Order): string {
     `   *TOTAL: Le ${order.totalAmount.toFixed(2)}*`,
     `━━━━━━━━━━━━━━━━━`,
     order.notes ? `\n_${order.notes}_` : '',
-    ``,
-    `Thank you for choosing *GULP by Andrea*!`,
-    `We appreciate your patronage.`,
+    paymentTerms ? `\n*Payment Terms*\n${paymentTerms}` : '',
+    footerNotes ? `\n${footerNotes}` : `\nThank you for choosing *GULP by Andrea*!\nWe appreciate your patronage.`,
   ].filter(Boolean).join('\n');
   return lines;
 }
