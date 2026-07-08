@@ -142,35 +142,35 @@ function OrderFormDialog({ order, onSave, trigger }: {
 function generateInvoiceText(order: Order): string {
   const itemsSubtotal = order.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   const lines = [
-    `🍨 *GULP BY ANDREA*`,
+    `*GULP BY ANDREA*`,
     `_"Sip. Smile. Repeat."_`,
     ``,
     `━━━━━━━━━━━━━━━━━`,
-    `🧾 *INVOICE*`,
+    `*INVOICE*`,
     `━━━━━━━━━━━━━━━━━`,
     ``,
-    `📅 *Date:* ${new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`,
-    `👤 *Customer:* ${order.customerName}`,
-    `📞 *Phone:* ${order.customerPhone}`,
-    order.deliveryAddress ? `📍 *Address:* ${order.deliveryAddress}` : '',
+    `*Date:* ${new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`,
+    `*Customer:* ${order.customerName}`,
+    `*Phone:* ${order.customerPhone}`,
+    order.deliveryAddress ? `*Address:* ${order.deliveryAddress}` : '',
     ``,
     `━━━━━━━━━━━━━━━━━`,
-    `📦 *ORDER DETAILS*`,
+    `*ORDER DETAILS*`,
     `━━━━━━━━━━━━━━━━━`,
     ...order.items.map(i =>
-      `▸ ${i.flavorName} × ${i.quantity}\n   Le ${i.unitPrice.toFixed(2)} each → *Le ${(i.quantity * i.unitPrice).toFixed(2)}*`
+      `- ${i.flavorName} x ${i.quantity}\n   Le ${i.unitPrice.toFixed(2)} each -> *Le ${(i.quantity * i.unitPrice).toFixed(2)}*`
     ),
     ``,
     `───────────────────`,
     `   Subtotal: Le ${itemsSubtotal.toFixed(2)}`,
-    order.deliveryFee > 0 ? `   🚗 Delivery: Le ${order.deliveryFee.toFixed(2)}` : '',
+    order.deliveryFee > 0 ? `   Delivery: Le ${order.deliveryFee.toFixed(2)}` : '',
     `───────────────────`,
-    `   💰 *TOTAL: Le ${order.totalAmount.toFixed(2)}*`,
+    `   *TOTAL: Le ${order.totalAmount.toFixed(2)}*`,
     `━━━━━━━━━━━━━━━━━`,
-    order.notes ? `\n📝 _${order.notes}_` : '',
+    order.notes ? `\n_${order.notes}_` : '',
     ``,
-    `Thank you for choosing *GULP by Andrea*! 🍨`,
-    `We appreciate your patronage 💜`,
+    `Thank you for choosing *GULP by Andrea*!`,
+    `We appreciate your patronage.`,
   ].filter(Boolean).join('\n');
   return lines;
 }
@@ -184,80 +184,97 @@ function loadImageAsBase64(src: string): Promise<string> {
       canvas.width = img.width;
       canvas.height = img.height;
       canvas.getContext('2d')!.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/jpeg'));
+      resolve(canvas.toDataURL('image/png'));
     };
     img.src = src;
   });
 }
 
+// GULP brand palette
+const BRAND = {
+  pink: [233, 30, 99] as [number, number, number],       // primary hot pink
+  pinkDark: [173, 20, 87] as [number, number, number],   // deeper pink
+  pinkSoft: [252, 228, 236] as [number, number, number], // wash / row highlight
+  ink: [30, 30, 30] as [number, number, number],         // near-black for body text
+  muted: [120, 120, 120] as [number, number, number],
+  line: [240, 210, 224] as [number, number, number],
+};
+
 async function generateInvoicePDF(order: Order): Promise<jsPDF> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
-  const margin = 20;
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 18;
   const contentW = pageW - margin * 2;
 
-  // Background accent bar at top
-  doc.setFillColor(180, 60, 120);
-  doc.rect(0, 0, pageW, 6, 'F');
+  // Top brand band
+  doc.setFillColor(...BRAND.pink);
+  doc.rect(0, 0, pageW, 10, 'F');
 
-  // Load logo
+  // Logo (PNG preserves transparency)
+  let logoDrawn = false;
   try {
     const logoData = await loadImageAsBase64(logoImg);
-    doc.addImage(logoData, 'JPEG', margin, 14, 24, 24);
+    doc.addImage(logoData, 'PNG', margin, 18, 34, 22);
+    logoDrawn = true;
   } catch { /* skip logo if fails */ }
 
-  // Business name next to logo
-  let y = 20;
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(50, 20, 60);
-  doc.text("GULP by Andrea", margin + 30, y);
-  y += 6;
-  doc.setFontSize(9);
+  // Business wordmark next to logo (fallback if logo missing)
+  if (!logoDrawn) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(24);
+    doc.setTextColor(...BRAND.pink);
+    doc.text('GULP', margin, 32);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.ink);
+    doc.text('by Andrea', margin + 22, 32);
+  }
+
+  // Tagline under logo
   doc.setFont('helvetica', 'italic');
-  doc.setTextColor(140, 100, 140);
-  doc.text('"Sip. Smile. Repeat."', margin + 30, y);
-  y += 5;
-  doc.setFontSize(8);
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Sip. Smile. Repeat.', margin, 46);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(120);
-  doc.text('Freetown, Sierra Leone', margin + 30, y);
+  doc.setFontSize(8);
+  doc.text('Freetown, Sierra Leone', margin, 51);
 
   // INVOICE title - right aligned
-  doc.setFontSize(28);
+  doc.setFontSize(30);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(180, 60, 120);
-  doc.text('INVOICE', pageW - margin, 22, { align: 'right' });
+  doc.setTextColor(...BRAND.pink);
+  doc.text('INVOICE', pageW - margin, 26, { align: 'right' });
 
   // Invoice number & date - right aligned
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100);
+  doc.setTextColor(...BRAND.muted);
   const dateStr = new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-  doc.text(`#${order.id.slice(0, 8).toUpperCase()}`, pageW - margin, 30, { align: 'right' });
-  doc.text(dateStr, pageW - margin, 35, { align: 'right' });
+  doc.text(`Invoice #${order.id.slice(0, 8).toUpperCase()}`, pageW - margin, 34, { align: 'right' });
+  doc.text(dateStr, pageW - margin, 39, { align: 'right' });
 
   // Divider
-  y = 46;
-  doc.setDrawColor(220, 200, 220);
+  let y = 58;
+  doc.setDrawColor(...BRAND.line);
   doc.setLineWidth(0.5);
   doc.line(margin, y, pageW - margin, y);
 
   // Bill To section
-  y += 8;
+  y += 9;
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(180, 60, 120);
+  doc.setTextColor(...BRAND.pink);
   doc.text('BILL TO', margin, y);
-  y += 5;
+  y += 6;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(40);
+  doc.setTextColor(...BRAND.ink);
   doc.text(order.customerName, margin, y);
   y += 5;
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100);
+  doc.setTextColor(...BRAND.muted);
   doc.text(order.customerPhone, margin, y);
   if (order.deliveryAddress) {
     y += 5;
@@ -265,43 +282,46 @@ async function generateInvoicePDF(order: Order): Promise<jsPDF> {
   }
 
   // Payment status - right side
-  const statusY = 54;
+  const statusY = 67;
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(180, 60, 120);
+  doc.setTextColor(...BRAND.pink);
   doc.text('STATUS', pageW - margin, statusY, { align: 'right' });
-  doc.setFontSize(10);
-  const statusColor = order.status === 'completed' ? [34, 139, 34] : order.status === 'pending' ? [200, 150, 0] : [200, 50, 50];
-  doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-  doc.text(order.status.toUpperCase(), pageW - margin, statusY + 5, { align: 'right' });
+  doc.setFontSize(11);
+  const statusColor: [number, number, number] =
+    order.status === 'completed' ? [34, 139, 34]
+    : order.status === 'pending' ? [200, 150, 0]
+    : [200, 50, 50];
+  doc.setTextColor(...statusColor);
+  doc.text(order.status.toUpperCase(), pageW - margin, statusY + 6, { align: 'right' });
 
   // Table
-  y += 12;
-  const colX = { item: margin + 2, qty: margin + 90, price: margin + 115, amount: pageW - margin - 2 };
+  y = Math.max(y, statusY + 12) + 10;
+  const colX = { item: margin + 3, qty: margin + 90, price: margin + 118, amount: pageW - margin - 3 };
 
   // Table header
-  doc.setFillColor(245, 238, 245);
-  doc.roundedRect(margin, y - 4, contentW, 8, 2, 2, 'F');
+  doc.setFillColor(...BRAND.pink);
+  doc.roundedRect(margin, y - 5, contentW, 9, 2, 2, 'F');
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 60, 100);
+  doc.setTextColor(255, 255, 255);
   doc.text('ITEM', colX.item, y);
   doc.text('QTY', colX.qty, y, { align: 'center' });
   doc.text('PRICE', colX.price, y, { align: 'center' });
   doc.text('AMOUNT', colX.amount, y, { align: 'right' });
 
   // Table rows
-  y += 9;
+  y += 10;
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(50);
   doc.setFontSize(9);
   order.items.forEach((item, idx) => {
     const amount = item.quantity * item.unitPrice;
     if (idx % 2 === 0) {
-      doc.setFillColor(252, 250, 252);
+      doc.setFillColor(...BRAND.pinkSoft);
       doc.rect(margin, y - 4, contentW, 7, 'F');
     }
-    doc.text(`🍨 ${item.flavorName}`, colX.item, y);
+    doc.setTextColor(...BRAND.ink);
+    doc.text(item.flavorName, colX.item, y);
     doc.text(String(item.quantity), colX.qty, y, { align: 'center' });
     doc.text(`Le ${item.unitPrice.toLocaleString()}`, colX.price, y, { align: 'center' });
     doc.setFont('helvetica', 'bold');
@@ -312,15 +332,15 @@ async function generateInvoicePDF(order: Order): Promise<jsPDF> {
 
   // Totals section
   y += 4;
-  doc.setDrawColor(220, 200, 220);
+  doc.setDrawColor(...BRAND.line);
   doc.line(margin + 80, y, pageW - margin, y);
   y += 7;
   const subtotal = order.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   doc.setFontSize(9);
-  doc.setTextColor(80);
+  doc.setTextColor(...BRAND.ink);
   doc.text('Subtotal', margin + 105, y);
   doc.text(`Le ${subtotal.toLocaleString()}`, colX.amount, y, { align: 'right' });
-  
+
   if (order.deliveryFee > 0) {
     y += 6;
     doc.text('Delivery Fee', margin + 105, y);
@@ -328,44 +348,48 @@ async function generateInvoicePDF(order: Order): Promise<jsPDF> {
   }
 
   // Total box
-  y += 8;
-  doc.setFillColor(180, 60, 120);
-  doc.roundedRect(margin + 90, y - 5, contentW - 90, 10, 2, 2, 'F');
+  y += 9;
+  doc.setFillColor(...BRAND.pink);
+  doc.roundedRect(margin + 88, y - 6, contentW - 88, 12, 2, 2, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(255);
+  doc.setFontSize(12);
+  doc.setTextColor(255, 255, 255);
   doc.text('TOTAL', margin + 105, y + 1);
   doc.text(`Le ${order.totalAmount.toLocaleString()}`, colX.amount, y + 1, { align: 'right' });
 
   // Notes
   if (order.notes) {
-    y += 16;
+    y += 18;
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(180, 60, 120);
+    doc.setTextColor(...BRAND.pink);
     doc.text('NOTES', margin, y);
     y += 5;
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100);
-    doc.text(order.notes, margin, y);
+    doc.setTextColor(...BRAND.muted);
+    doc.text(order.notes, margin, y, { maxWidth: contentW });
   }
 
   // Footer
-  const footerY = 272;
-  doc.setDrawColor(220, 200, 220);
+  const footerY = pageH - 22;
+  doc.setDrawColor(...BRAND.line);
   doc.line(margin, footerY - 6, pageW - margin, footerY - 6);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.pinkDark);
+  doc.text('Thank you for your patronage.', pageW / 2, footerY, { align: 'center' });
+  doc.setFont('helvetica', 'italic');
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(160);
-  doc.text("Thank you for your patronage! 💜", pageW / 2, footerY, { align: 'center' });
-  doc.text("GULP by Andrea — Sip. Smile. Repeat. 🍨", pageW / 2, footerY + 4, { align: 'center' });
+  doc.setTextColor(...BRAND.muted);
+  doc.text('GULP by Andrea  |  Sip. Smile. Repeat.', pageW / 2, footerY + 5, { align: 'center' });
 
-  // Bottom accent bar
-  doc.setFillColor(180, 60, 120);
-  doc.rect(0, 291, pageW, 6, 'F');
+  // Bottom brand band
+  doc.setFillColor(...BRAND.pink);
+  doc.rect(0, pageH - 8, pageW, 8, 'F');
 
   return doc;
 }
+
 
 async function shareInvoicePDF(order: Order) {
   const doc = await generateInvoicePDF(order);
