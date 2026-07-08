@@ -38,10 +38,10 @@ export default function AuthPage() {
         <div className="text-center mb-8 animate-fade-in">
           <div className="relative inline-block">
             <div className="absolute -inset-2 gradient-berry rounded-full blur-lg opacity-30 animate-pulse" />
-            <img src={logo} alt="Dee's Yogo & More" className="w-20 h-20 rounded-full object-cover shadow-lg relative" />
+            <img src={logo} alt="GULP by Andrea" className="w-20 h-20 rounded-full object-cover shadow-lg relative" />
           </div>
-          <h1 className="text-2xl font-extrabold mt-4 text-foreground">Dee's Yogo & More</h1>
-          <p className="text-sm text-muted-foreground mt-1">Cream Come True ✨</p>
+          <h1 className="text-2xl font-extrabold mt-4 text-foreground">GULP by Andrea</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sip. Smile. Repeat. ✨</p>
         </div>
 
         {/* Form */}
@@ -58,7 +58,7 @@ export default function AuthPage() {
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="dee@yogurt.com"
+                  placeholder="andrea@gulp.com"
                   required
                 />
               </div>

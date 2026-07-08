@@ -77,11 +77,11 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="absolute -inset-1 gradient-berry rounded-full blur opacity-30 animate-pulse" />
-            <img src={logo} alt="Dee's Yogo & More" className="w-12 h-12 rounded-full object-cover shadow-lg relative" />
+            <img src={logo} alt="GULP by Andrea" className="w-12 h-12 rounded-full object-cover shadow-lg relative" />
           </div>
           <div>
             <p className="text-sm text-muted-foreground font-medium">Welcome back 👋</p>
-            <h1 className="text-xl font-extrabold text-foreground">Dee's Yogo & More</h1>
+            <h1 className="text-xl font-extrabold text-foreground">GULP by Andrea</h1>
           </div>
         </div>
         <div className="h-9 w-9" /> {/* spacer */}
