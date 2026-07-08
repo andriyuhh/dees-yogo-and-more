@@ -85,6 +85,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (updates.darkMode !== undefined) dbUpdates.dark_mode = updates.darkMode;
     if (updates.lastBackupReminder !== undefined) dbUpdates.last_backup_reminder = updates.lastBackupReminder;
     if (updates.pinHash !== undefined) dbUpdates.pin_hash = updates.pinHash;
+    if (updates.invoicePaymentTerms !== undefined) dbUpdates.invoice_payment_terms = updates.invoicePaymentTerms;
+    if (updates.invoiceFooterNotes !== undefined) dbUpdates.invoice_footer_notes = updates.invoiceFooterNotes;
     await supabase.from('user_settings').update(dbUpdates).eq('user_id', user.id);
     setSettings(prev => ({ ...prev, ...updates }));
   }, [user, ensureRow]);
