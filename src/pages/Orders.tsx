@@ -419,8 +419,8 @@ async function generateInvoicePDF(order: Order, opts?: { paymentTerms?: string; 
 }
 
 
-async function shareInvoicePDF(order: Order) {
-  const doc = await generateInvoicePDF(order);
+async function shareInvoicePDF(order: Order, invoiceOpts?: { paymentTerms?: string; footerNotes?: string }) {
+  const doc = await generateInvoicePDF(order, invoiceOpts);
   const pdfBlob = doc.output('blob');
   const file = new File([pdfBlob], `Invoice-${order.customerName.replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
 
@@ -430,7 +430,7 @@ async function shareInvoicePDF(order: Order) {
   } else {
     // Fallback: download PDF + open WhatsApp with text
     doc.save(file.name);
-    const text = generateInvoiceText(order);
+    const text = generateInvoiceText(order, invoiceOpts);
     const phone = order.customerPhone.replace(/[^0-9+]/g, '');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   }
