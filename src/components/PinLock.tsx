@@ -26,7 +26,7 @@ function useBiometricAuth() {
       const credential = await navigator.credentials.create({
         publicKey: {
           challenge,
-          rp: { name: "Dee's Yogo & More", id: window.location.hostname },
+          rp: { name: "GULP by Andrea", id: window.location.hostname },
           user: { id: userId, name: 'owner', displayName: 'Store Owner' },
           pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
           authenticatorSelection: {
@@ -135,7 +135,7 @@ export default function PinLock() {
         <img src={logo} alt="Logo" className="w-16 h-16 rounded-full object-cover shadow-2xl ring-2 ring-primary/40 relative" />
       </div>
 
-      <p className="text-xs text-muted-foreground/70 font-medium mb-6 italic">Cream Come True ✨</p>
+      <p className="text-xs text-muted-foreground/70 font-medium mb-6 italic">Sip. Smile. Repeat. ✨</p>
 
       <div className="flex items-center gap-2 text-muted-foreground mb-5">
         <ShieldCheck className="h-4 w-4 text-primary" />

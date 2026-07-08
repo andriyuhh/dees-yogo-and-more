@@ -142,8 +142,8 @@ function OrderFormDialog({ order, onSave, trigger }: {
 function generateInvoiceText(order: Order): string {
   const itemsSubtotal = order.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   const lines = [
-    `🍨 *DEE'S YOGO & MORE*`,
-    `_"Cream Come True"_`,
+    `🍨 *GULP BY ANDREA*`,
+    `_"Sip. Smile. Repeat."_`,
     ``,
     `━━━━━━━━━━━━━━━━━`,
     `🧾 *INVOICE*`,
@@ -169,7 +169,7 @@ function generateInvoiceText(order: Order): string {
     `━━━━━━━━━━━━━━━━━`,
     order.notes ? `\n📝 _${order.notes}_` : '',
     ``,
-    `Thank you for choosing *Dee's Yogo & More*! 🍨`,
+    `Thank you for choosing *GULP by Andrea*! 🍨`,
     `We appreciate your patronage 💜`,
   ].filter(Boolean).join('\n');
   return lines;
@@ -211,12 +211,12 @@ async function generateInvoicePDF(order: Order): Promise<jsPDF> {
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(50, 20, 60);
-  doc.text("Dee's Yogo & More", margin + 30, y);
+  doc.text("GULP by Andrea", margin + 30, y);
   y += 6;
   doc.setFontSize(9);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(140, 100, 140);
-  doc.text('"Cream Come True"', margin + 30, y);
+  doc.text('"Sip. Smile. Repeat."', margin + 30, y);
   y += 5;
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
@@ -358,7 +358,7 @@ async function generateInvoicePDF(order: Order): Promise<jsPDF> {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(160);
   doc.text("Thank you for your patronage! 💜", pageW / 2, footerY, { align: 'center' });
-  doc.text("Dee's Yogo & More — Cream Come True 🍨", pageW / 2, footerY + 4, { align: 'center' });
+  doc.text("GULP by Andrea — Sip. Smile. Repeat. 🍨", pageW / 2, footerY + 4, { align: 'center' });
 
   // Bottom accent bar
   doc.setFillColor(180, 60, 120);
@@ -374,7 +374,7 @@ async function shareInvoicePDF(order: Order) {
 
   // Try native share (works on mobile with WhatsApp)
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({ files: [file], title: 'Invoice', text: `Invoice for ${order.customerName} - Dee's Yogo & More` });
+    await navigator.share({ files: [file], title: 'Invoice', text: `Invoice for ${order.customerName} - GULP by Andrea` });
   } else {
     // Fallback: download PDF + open WhatsApp with text
     doc.save(file.name);

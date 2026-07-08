@@ -19,7 +19,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
     >
       <img
         src={logo}
-        alt="Dee's Yogo & More"
+        alt="GULP by Andrea"
         className={`w-48 h-48 rounded-full object-cover shadow-2xl transition-all duration-700 ease-out ${
           phase === 'enter'
             ? 'scale-50 opacity-0'
@@ -33,7 +33,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
           phase === 'enter' ? 'opacity-0 translate-y-4' : phase === 'hold' ? 'opacity-100 translate-y-0' : 'opacity-0'
         }`}
       >
-        Cream Come True
+        Sip. Smile. Repeat.
       </p>
     </div>
   );

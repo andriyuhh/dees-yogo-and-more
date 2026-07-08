@@ -62,9 +62,9 @@ export default function InstallPrompt() {
     <div className="fixed top-0 left-0 right-0 z-[60] animate-slide-up">
       <div className="mx-3 mt-3 rounded-2xl border border-border bg-card shadow-xl p-3">
         <div className="flex items-center gap-3">
-          <img src={logo} alt="Dee's Yogo" className="w-12 h-12 rounded-xl object-cover shadow-md" />
+          <img src={logo} alt="GULP" className="w-12 h-12 rounded-xl object-cover shadow-md" />
           <div className="flex-1 min-w-0">
-            <p className="font-extrabold text-sm">Install Dee's Yogo & More</p>
+            <p className="font-extrabold text-sm">Install GULP by Andrea</p>
             {isIOS ? (
               <p className="text-xs text-muted-foreground">
                 Tap <Share className="inline h-3 w-3 -mt-0.5" /> then <span className="font-semibold">"Add to Home Screen"</span>
