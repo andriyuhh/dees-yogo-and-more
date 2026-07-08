@@ -39,6 +39,24 @@ export default function SettingsPage() {
   });
   const [resetting, setResetting] = useState(false);
 
+  useEffect(() => {
+    setTerms(settings.invoicePaymentTerms);
+    setFooter(settings.invoiceFooterNotes);
+  }, [settings.invoicePaymentTerms, settings.invoiceFooterNotes]);
+
+  const saveInvoiceSettings = async () => {
+    setSavingInvoice(true);
+    try {
+      await updateSettings({ invoicePaymentTerms: terms, invoiceFooterNotes: footer });
+      toast.success('Invoice settings saved ✨');
+    } catch {
+      toast.error('Could not save');
+    } finally {
+      setSavingInvoice(false);
+    }
+  };
+
+
   const handleReset = async () => {
     if (confirmText !== 'RESET') return toast.error('Type RESET to confirm');
     setResetting(true);
