@@ -368,17 +368,44 @@ async function generateInvoicePDF(order: Order, opts?: { paymentTerms?: string; 
     y += 5;
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...BRAND.muted);
-    doc.text(order.notes, margin, y, { maxWidth: contentW });
+    const wrapped = doc.splitTextToSize(order.notes, contentW);
+    doc.text(wrapped, margin, y);
+    y += wrapped.length * 4;
+  }
+
+  // Payment Terms block
+  const paymentTerms = opts?.paymentTerms?.trim();
+  if (paymentTerms) {
+    y += 10;
+    doc.setFillColor(...BRAND.pinkSoft);
+    const termsLines = doc.splitTextToSize(paymentTerms, contentW - 10);
+    const boxH = 10 + termsLines.length * 4;
+    doc.roundedRect(margin, y - 4, contentW, boxH, 2, 2, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...BRAND.pinkDark);
+    doc.text('PAYMENT TERMS', margin + 5, y + 1);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.ink);
+    doc.text(termsLines, margin + 5, y + 7);
+    y += boxH;
   }
 
   // Footer
   const footerY = pageH - 22;
   doc.setDrawColor(...BRAND.line);
   doc.line(margin, footerY - 6, pageW - margin, footerY - 6);
+  const footerNotes = opts?.footerNotes?.trim();
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(...BRAND.pinkDark);
-  doc.text('Thank you for your patronage.', pageW / 2, footerY, { align: 'center' });
+  if (footerNotes) {
+    const fLines = doc.splitTextToSize(footerNotes, pageW - margin * 2);
+    doc.text(fLines, pageW / 2, footerY, { align: 'center' });
+  } else {
+    doc.text('Thank you for your patronage.', pageW / 2, footerY, { align: 'center' });
+  }
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(8);
   doc.setTextColor(...BRAND.muted);
