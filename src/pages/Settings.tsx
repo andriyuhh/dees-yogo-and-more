@@ -47,6 +47,36 @@ export default function SettingsPage() {
     setFooter(settings.invoiceFooterNotes);
   }, [settings.invoicePaymentTerms, settings.invoiceFooterNotes]);
 
+  useEffect(() => {
+    setWaNumber(settings.whatsappNumber);
+    setShopFee(String(settings.shopDeliveryFee));
+  }, [settings.whatsappNumber, settings.shopDeliveryFee]);
+
+  const saveShopSettings = async () => {
+    setSavingShop(true);
+    try {
+      await updateSettings({
+        whatsappNumber: waNumber.replace(/[^0-9+]/g, ''),
+        shopDeliveryFee: parseFloat(shopFee) || 0,
+      });
+      toast.success('Shop settings saved ✨');
+    } catch {
+      toast.error('Could not save');
+    } finally {
+      setSavingShop(false);
+    }
+  };
+
+  const shopUrl = `${window.location.origin}/shop`;
+  const copyShopUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(shopUrl);
+      toast.success('Shop link copied!');
+    } catch {
+      toast.error('Could not copy');
+    }
+  };
+
   const saveInvoiceSettings = async () => {
     setSavingInvoice(true);
     try {
