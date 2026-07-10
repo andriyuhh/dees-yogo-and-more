@@ -583,6 +583,9 @@ export default function OrdersPage() {
                 <button onClick={() => shareInvoicePDF(order, invoiceOpts)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share PDF invoice">
                   <Share2 className="h-3.5 w-3.5" />
                 </button>
+                <button onClick={() => shareInvoiceImage(order, invoiceOpts)} className="h-8 w-8 rounded-full bg-pink-500/20 text-pink-600 flex items-center justify-center hover:bg-pink-500/30 hover:scale-110 transition-all" title="Share invoice as image">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                </button>
                 {order.status === 'pending' && (
                   <>
                     <OrderFormDialog
