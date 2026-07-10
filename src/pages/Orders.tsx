@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import type { Order, OrderItem } from '@/types/yogurt';
+import { shareInvoiceImage } from '@/lib/invoiceImage';
 
 type DatePreset = 'all' | 'today' | 'week' | 'month' | 'custom';
 
