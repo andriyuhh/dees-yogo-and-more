@@ -45,6 +45,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     pinHash: null, hideProfit: false, darkMode: false, lastBackupReminder: new Date().toISOString(),
     invoicePaymentTerms: 'Payment due upon receipt. Mobile Money: Orange Money, AfriMoney, QMoney. Cash accepted on delivery.',
     invoiceFooterNotes: 'Thank you for choosing GULP by Andrea. For orders & inquiries, reach out on WhatsApp.',
+    whatsappNumber: '23275266940',
+    shopEnabled: true,
+    shopDeliveryFee: 0,
   });
   const [loading, setLoading] = useState(true);
   const [pinLocked, setPinLocked] = useState(false);
