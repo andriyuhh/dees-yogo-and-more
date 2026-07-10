@@ -96,6 +96,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (updates.pinHash !== undefined) dbUpdates.pin_hash = updates.pinHash;
     if (updates.invoicePaymentTerms !== undefined) dbUpdates.invoice_payment_terms = updates.invoicePaymentTerms;
     if (updates.invoiceFooterNotes !== undefined) dbUpdates.invoice_footer_notes = updates.invoiceFooterNotes;
+    if (updates.whatsappNumber !== undefined) dbUpdates.whatsapp_number = updates.whatsappNumber;
+    if (updates.shopEnabled !== undefined) dbUpdates.shop_enabled = updates.shopEnabled;
+    if (updates.shopDeliveryFee !== undefined) dbUpdates.shop_delivery_fee = updates.shopDeliveryFee;
     await supabase.from('user_settings').update(dbUpdates).eq('user_id', user.id);
     setSettings(prev => ({ ...prev, ...updates }));
   }, [user, ensureRow]);
