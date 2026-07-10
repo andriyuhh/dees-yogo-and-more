@@ -271,7 +271,52 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Reset Data */}
+        {/* Customer Shop Settings */}
+        <div className="card-playful animate-slide-up" style={{ animationDelay: '235ms' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <Store className="h-5 w-5 text-primary" />
+            <div>
+              <Label className="font-bold text-sm">Customer Ordering Website</Label>
+              <p className="text-xs text-muted-foreground">Share this link so customers can order online</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 bg-secondary rounded-xl p-2">
+              <a href="/shop" target="_blank" rel="noreferrer" className="flex-1 text-xs font-mono truncate text-primary underline">
+                {shopUrl}
+              </a>
+              <Button onClick={copyShopUrl} size="icon" variant="ghost" className="h-8 w-8 shrink-0">
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-semibold">Shop is open</Label>
+                <p className="text-xs text-muted-foreground">Turn off to hide from customers</p>
+              </div>
+              <Switch checked={settings.shopEnabled} onCheckedChange={v => updateSettings({ shopEnabled: v })} />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">WhatsApp number for new orders</Label>
+              <Input value={waNumber} onChange={e => setWaNumber(e.target.value)} placeholder="23275266940" className="mt-1" />
+              <p className="text-[10px] text-muted-foreground mt-1">Digits only, include country code (no +)</p>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Default delivery fee (Le)</Label>
+              <Input type="number" min={0} value={shopFee} onChange={e => setShopFee(e.target.value)} placeholder="0" className="mt-1" />
+              <p className="text-[10px] text-muted-foreground mt-1">Applied when a customer provides a delivery address</p>
+            </div>
+            <Button
+              onClick={saveShopSettings}
+              disabled={savingShop || (waNumber === settings.whatsappNumber && parseFloat(shopFee) === settings.shopDeliveryFee)}
+              size="sm"
+              className="gradient-berry text-primary-foreground rounded-full w-full"
+            >
+              {savingShop ? 'Saving…' : 'Save Shop Settings'}
+            </Button>
+          </div>
+        </div>
+
         <AlertDialog open={resetOpen} onOpenChange={(o) => { setResetOpen(o); if (!o) setConfirmText(''); }}>
           <AlertDialogTrigger asChild>
             <button className="card-playful w-full text-left flex items-center gap-3 animate-slide-up border border-destructive/30" style={{ animationDelay: '240ms' }}>
