@@ -26,6 +26,9 @@ export default function SettingsPage() {
   const [terms, setTerms] = useState(settings.invoicePaymentTerms);
   const [footer, setFooter] = useState(settings.invoiceFooterNotes);
   const [savingInvoice, setSavingInvoice] = useState(false);
+  const [waNumber, setWaNumber] = useState(settings.whatsappNumber);
+  const [shopFee, setShopFee] = useState(String(settings.shopDeliveryFee));
+  const [savingShop, setSavingShop] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [resetOpts, setResetOpts] = useState({
