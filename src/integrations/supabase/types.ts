@@ -239,8 +239,11 @@ export type Database = {
           invoice_payment_terms: string
           last_backup_reminder: string | null
           pin_hash: string | null
+          shop_delivery_fee: number
+          shop_enabled: boolean
           updated_at: string
           user_id: string
+          whatsapp_number: string
         }
         Insert: {
           created_at?: string
@@ -251,8 +254,11 @@ export type Database = {
           invoice_payment_terms?: string
           last_backup_reminder?: string | null
           pin_hash?: string | null
+          shop_delivery_fee?: number
+          shop_enabled?: boolean
           updated_at?: string
           user_id: string
+          whatsapp_number?: string
         }
         Update: {
           created_at?: string
@@ -263,8 +269,11 @@ export type Database = {
           invoice_payment_terms?: string
           last_backup_reminder?: string | null
           pin_hash?: string | null
+          shop_delivery_fee?: number
+          shop_enabled?: boolean
           updated_at?: string
           user_id?: string
+          whatsapp_number?: string
         }
         Relationships: []
       }

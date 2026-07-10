@@ -22,6 +22,7 @@ import PricingCalculator from "./pages/PricingCalculator";
 import AuthPage from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
+import Shop from "./pages/Shop";
 
 const queryClient = new QueryClient();
 
@@ -87,7 +88,11 @@ const App = () => {
           <InstallPrompt />
           {showSplash && <SplashScreen onFinish={hideSplash} />}
           <BrowserRouter>
-            <AppRoutes />
+            <Routes>
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/shop/*" element={<Shop />} />
+              <Route path="*" element={<AppRoutes />} />
+            </Routes>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

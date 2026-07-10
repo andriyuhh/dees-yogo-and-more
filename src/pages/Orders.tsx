@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
 import { useSettings } from '@/hooks/useSettings';
-import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2, FileDown, CalendarIcon } from 'lucide-react';
+import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2, FileDown, CalendarIcon, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import type { Order, OrderItem } from '@/types/yogurt';
+import { shareInvoiceImage } from '@/lib/invoiceImage';
 
 type DatePreset = 'all' | 'today' | 'week' | 'month' | 'custom';
 
@@ -581,6 +582,9 @@ export default function OrdersPage() {
               <div className="flex gap-1.5">
                 <button onClick={() => shareInvoicePDF(order, invoiceOpts)} className="h-8 w-8 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center hover:bg-green-500/30 hover:scale-110 transition-all" title="Share PDF invoice">
                   <Share2 className="h-3.5 w-3.5" />
+                </button>
+                <button onClick={() => shareInvoiceImage(order, invoiceOpts)} className="h-8 w-8 rounded-full bg-pink-500/20 text-pink-600 flex items-center justify-center hover:bg-pink-500/30 hover:scale-110 transition-all" title="Share invoice as image">
+                  <ImageIcon className="h-3.5 w-3.5" />
                 </button>
                 {order.status === 'pending' && (
                   <>

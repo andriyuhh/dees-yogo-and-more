@@ -9,6 +9,9 @@ interface Settings {
   lastBackupReminder: string;
   invoicePaymentTerms: string;
   invoiceFooterNotes: string;
+  whatsappNumber: string;
+  shopEnabled: boolean;
+  shopDeliveryFee: number;
 }
 
 interface SettingsContextType {
@@ -42,6 +45,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     pinHash: null, hideProfit: false, darkMode: false, lastBackupReminder: new Date().toISOString(),
     invoicePaymentTerms: 'Payment due upon receipt. Mobile Money: Orange Money, AfriMoney, QMoney. Cash accepted on delivery.',
     invoiceFooterNotes: 'Thank you for choosing GULP by Andrea. For orders & inquiries, reach out on WhatsApp.',
+    whatsappNumber: '23275266940',
+    shopEnabled: true,
+    shopDeliveryFee: 0,
   });
   const [loading, setLoading] = useState(true);
   const [pinLocked, setPinLocked] = useState(false);
@@ -57,6 +63,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           lastBackupReminder: data.last_backup_reminder,
           invoicePaymentTerms: (data as any).invoice_payment_terms ?? '',
           invoiceFooterNotes: (data as any).invoice_footer_notes ?? '',
+          whatsappNumber: (data as any).whatsapp_number ?? '23275266940',
+          shopEnabled: (data as any).shop_enabled ?? true,
+          shopDeliveryFee: Number((data as any).shop_delivery_fee) || 0,
         });
         if (data.pin_hash) setPinLocked(true);
       }
@@ -87,6 +96,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (updates.pinHash !== undefined) dbUpdates.pin_hash = updates.pinHash;
     if (updates.invoicePaymentTerms !== undefined) dbUpdates.invoice_payment_terms = updates.invoicePaymentTerms;
     if (updates.invoiceFooterNotes !== undefined) dbUpdates.invoice_footer_notes = updates.invoiceFooterNotes;
+    if (updates.whatsappNumber !== undefined) dbUpdates.whatsapp_number = updates.whatsappNumber;
+    if (updates.shopEnabled !== undefined) dbUpdates.shop_enabled = updates.shopEnabled;
+    if (updates.shopDeliveryFee !== undefined) dbUpdates.shop_delivery_fee = updates.shopDeliveryFee;
     await supabase.from('user_settings').update(dbUpdates).eq('user_id', user.id);
     setSettings(prev => ({ ...prev, ...updates }));
   }, [user, ensureRow]);
