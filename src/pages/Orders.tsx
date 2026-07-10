@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useYogurtStore } from '@/hooks/useYogurtStore';
 import { useSettings } from '@/hooks/useSettings';
-import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2, FileDown, CalendarIcon } from 'lucide-react';
+import { Plus, Phone, Check, X, MapPin, Truck, Pencil, Trash2, Share2, FileDown, CalendarIcon, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
