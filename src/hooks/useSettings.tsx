@@ -63,6 +63,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           lastBackupReminder: data.last_backup_reminder,
           invoicePaymentTerms: (data as any).invoice_payment_terms ?? '',
           invoiceFooterNotes: (data as any).invoice_footer_notes ?? '',
+          whatsappNumber: (data as any).whatsapp_number ?? '23275266940',
+          shopEnabled: (data as any).shop_enabled ?? true,
+          shopDeliveryFee: Number((data as any).shop_delivery_fee) || 0,
         });
         if (data.pin_hash) setPinLocked(true);
       }
