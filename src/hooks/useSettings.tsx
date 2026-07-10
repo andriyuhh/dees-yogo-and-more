@@ -9,6 +9,9 @@ interface Settings {
   lastBackupReminder: string;
   invoicePaymentTerms: string;
   invoiceFooterNotes: string;
+  whatsappNumber: string;
+  shopEnabled: boolean;
+  shopDeliveryFee: number;
 }
 
 interface SettingsContextType {
