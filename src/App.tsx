@@ -22,6 +22,7 @@ import PricingCalculator from "./pages/PricingCalculator";
 import AuthPage from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
+import Shop from "./pages/Shop";
 
 const queryClient = new QueryClient();
 
