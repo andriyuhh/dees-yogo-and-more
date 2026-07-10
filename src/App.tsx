@@ -88,7 +88,11 @@ const App = () => {
           <InstallPrompt />
           {showSplash && <SplashScreen onFinish={hideSplash} />}
           <BrowserRouter>
-            <AppRoutes />
+            <Routes>
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/shop/*" element={<Shop />} />
+              <Route path="*" element={<AppRoutes />} />
+            </Routes>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
