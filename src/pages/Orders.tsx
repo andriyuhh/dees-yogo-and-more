@@ -579,8 +579,13 @@ export default function OrdersPage() {
                   {order.status === 'pending' ? '⏳' : order.status === 'completed' ? '✅' : '❌'} {order.status}
                 </span>
                 <button
-                  onClick={() => updateOrder(order.id, { isPaid: !order.isPaid, paymentMethod: !order.isPaid ? (order.paymentMethod || 'cash') : order.paymentMethod })}
+                  onClick={() => {
+                    const nextPaid = !order.isPaid;
+                    updateOrder(order.id, { isPaid: nextPaid, paymentMethod: nextPaid ? (order.paymentMethod || 'cash') : order.paymentMethod });
+                    if (nextPaid) sendStatusWhatsApp({ ...order, isPaid: true }, 'paid', settings.shopName);
+                  }}
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${order.isPaid ? 'bg-success/20 text-success' : 'bg-destructive/15 text-destructive'}`}
+                  title={order.isPaid ? 'Mark unpaid' : 'Mark paid & notify customer on WhatsApp'}
                 >
                   {order.isPaid ? `✅ ${order.paymentMethod === 'orange_money' ? '🟠 OM' : order.paymentMethod === 'afrimoney' ? '📱 AM' : order.paymentMethod === 'qmoney' ? '💜 QMoney' : '💵 Cash'}` : '❌ Unpaid'}
                 </button>
