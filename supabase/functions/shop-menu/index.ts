@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     // Pick the earliest user_settings row as the shop owner (single-tenant shop).
     const { data: settings, error: settingsError } = await supabase
       .from("user_settings")
-      .select("user_id, whatsapp_number, shop_enabled, shop_delivery_fee")
+      .select("user_id, whatsapp_number, shop_enabled, shop_delivery_fee, shop_name, shop_tagline, shop_header_color, shop_accent_color, shop_banner_url, shop_logo_url")
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
@@ -51,8 +51,12 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        business_name: "GULP by Andrea",
-        tagline: "Sip. Smile. Repeat.",
+        business_name: (settings as any).shop_name || "GULP by Andrea",
+        tagline: (settings as any).shop_tagline || "Sip. Smile. Repeat.",
+        header_color: (settings as any).shop_header_color || "#ec4899",
+        accent_color: (settings as any).shop_accent_color || "#db2777",
+        banner_url: (settings as any).shop_banner_url || "",
+        logo_url: (settings as any).shop_logo_url || "",
         whatsapp_number: settings.whatsapp_number,
         delivery_fee: Number(settings.shop_delivery_fee) || 0,
         flavors: flavors || [],

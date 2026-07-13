@@ -438,6 +438,18 @@ async function shareInvoicePDF(order: Order, invoiceOpts?: { paymentTerms?: stri
   }
 }
 
+function sendStatusWhatsApp(order: Order, kind: 'paid' | 'completed', businessName = 'GULP by Andrea') {
+  const phone = order.customerPhone.replace(/[^0-9+]/g, '');
+  if (!phone) return;
+  const orderId = order.id.slice(0, 8).toUpperCase();
+  const total = `Le ${order.totalAmount.toLocaleString()}`;
+  const items = order.items.map(i => `• ${i.quantity}x ${i.flavorName}`).join('\n');
+  const msg = kind === 'paid'
+    ? `Hi ${order.customerName.split(' ')[0]}! ✅\n\nWe've received your payment of *${total}* for order *#${orderId}*.\n\n${items}\n\nThank you for choosing *${businessName}*! We'll let you know as soon as it's ready. 🍦`
+    : `Hi ${order.customerName.split(' ')[0]}! 🎉\n\nYour order *#${orderId}* is ready / on its way!\n\n${items}\n\nTotal: *${total}*\n\nThank you for ordering from *${businessName}* — sip, smile, repeat! 💜`;
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
 export default function OrdersPage() {
   const { orders, addOrder, updateOrder, deleteOrder, updateOrderStatus, loading } = useYogurtStore();
   const { settings } = useSettings();
@@ -567,8 +579,13 @@ export default function OrdersPage() {
                   {order.status === 'pending' ? '⏳' : order.status === 'completed' ? '✅' : '❌'} {order.status}
                 </span>
                 <button
-                  onClick={() => updateOrder(order.id, { isPaid: !order.isPaid, paymentMethod: !order.isPaid ? (order.paymentMethod || 'cash') : order.paymentMethod })}
+                  onClick={() => {
+                    const nextPaid = !order.isPaid;
+                    updateOrder(order.id, { isPaid: nextPaid, paymentMethod: nextPaid ? (order.paymentMethod || 'cash') : order.paymentMethod });
+                    if (nextPaid) sendStatusWhatsApp({ ...order, isPaid: true }, 'paid', settings.shopName);
+                  }}
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${order.isPaid ? 'bg-success/20 text-success' : 'bg-destructive/15 text-destructive'}`}
+                  title={order.isPaid ? 'Mark unpaid' : 'Mark paid & notify customer on WhatsApp'}
                 >
                   {order.isPaid ? `✅ ${order.paymentMethod === 'orange_money' ? '🟠 OM' : order.paymentMethod === 'afrimoney' ? '📱 AM' : order.paymentMethod === 'qmoney' ? '💜 QMoney' : '💵 Cash'}` : '❌ Unpaid'}
                 </button>
@@ -597,7 +614,7 @@ export default function OrdersPage() {
                         </button>
                       }
                     />
-                    <button onClick={() => updateOrderStatus(order.id, 'completed')} className="h-8 w-8 rounded-full bg-success/20 text-success flex items-center justify-center hover:bg-success/30 hover:scale-110 transition-all"><Check className="h-4 w-4" /></button>
+                    <button onClick={() => { updateOrderStatus(order.id, 'completed'); sendStatusWhatsApp(order, 'completed', settings.shopName); }} className="h-8 w-8 rounded-full bg-success/20 text-success flex items-center justify-center hover:bg-success/30 hover:scale-110 transition-all" title="Mark completed & notify customer"><Check className="h-4 w-4" /></button>
                     <button onClick={() => updateOrderStatus(order.id, 'cancelled')} className="h-8 w-8 rounded-full bg-destructive/20 text-destructive flex items-center justify-center hover:bg-destructive/30 hover:scale-110 transition-all"><X className="h-4 w-4" /></button>
                   </>
                 )}

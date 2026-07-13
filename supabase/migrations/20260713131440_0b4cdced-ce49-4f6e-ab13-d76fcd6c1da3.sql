@@ -1,0 +1,8 @@
+
+ALTER TABLE public.user_settings
+  ADD COLUMN IF NOT EXISTS shop_header_color TEXT NOT NULL DEFAULT '#ec4899',
+  ADD COLUMN IF NOT EXISTS shop_accent_color TEXT NOT NULL DEFAULT '#db2777',
+  ADD COLUMN IF NOT EXISTS shop_banner_url TEXT,
+  ADD COLUMN IF NOT EXISTS shop_name TEXT NOT NULL DEFAULT 'GULP by Andrea',
+  ADD COLUMN IF NOT EXISTS shop_tagline TEXT NOT NULL DEFAULT 'Sip. Smile. Repeat.',
+  ADD COLUMN IF NOT EXISTS shop_logo_url TEXT;

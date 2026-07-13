@@ -29,6 +29,13 @@ export default function SettingsPage() {
   const [waNumber, setWaNumber] = useState(settings.whatsappNumber);
   const [shopFee, setShopFee] = useState(String(settings.shopDeliveryFee));
   const [savingShop, setSavingShop] = useState(false);
+  const [shopName, setShopName] = useState(settings.shopName);
+  const [shopTagline, setShopTagline] = useState(settings.shopTagline);
+  const [shopHeaderColor, setShopHeaderColor] = useState(settings.shopHeaderColor);
+  const [shopAccentColor, setShopAccentColor] = useState(settings.shopAccentColor);
+  const [shopBannerUrl, setShopBannerUrl] = useState(settings.shopBannerUrl);
+  const [shopLogoUrl, setShopLogoUrl] = useState(settings.shopLogoUrl);
+  const [savingBrand, setSavingBrand] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [resetOpts, setResetOpts] = useState({
@@ -50,7 +57,32 @@ export default function SettingsPage() {
   useEffect(() => {
     setWaNumber(settings.whatsappNumber);
     setShopFee(String(settings.shopDeliveryFee));
-  }, [settings.whatsappNumber, settings.shopDeliveryFee]);
+    setShopName(settings.shopName);
+    setShopTagline(settings.shopTagline);
+    setShopHeaderColor(settings.shopHeaderColor);
+    setShopAccentColor(settings.shopAccentColor);
+    setShopBannerUrl(settings.shopBannerUrl);
+    setShopLogoUrl(settings.shopLogoUrl);
+  }, [settings.whatsappNumber, settings.shopDeliveryFee, settings.shopName, settings.shopTagline, settings.shopHeaderColor, settings.shopAccentColor, settings.shopBannerUrl, settings.shopLogoUrl]);
+
+  const saveBranding = async () => {
+    setSavingBrand(true);
+    try {
+      await updateSettings({
+        shopName: shopName.trim() || 'GULP by Andrea',
+        shopTagline: shopTagline.trim() || 'Sip. Smile. Repeat.',
+        shopHeaderColor: shopHeaderColor || '#ec4899',
+        shopAccentColor: shopAccentColor || '#db2777',
+        shopBannerUrl: shopBannerUrl.trim(),
+        shopLogoUrl: shopLogoUrl.trim(),
+      });
+      toast.success('Shop branding saved ✨');
+    } catch {
+      toast.error('Could not save');
+    } finally {
+      setSavingBrand(false);
+    }
+  };
 
   const saveShopSettings = async () => {
     setSavingShop(true);
@@ -313,6 +345,84 @@ export default function SettingsPage() {
               className="gradient-berry text-primary-foreground rounded-full w-full"
             >
               {savingShop ? 'Saving…' : 'Save Shop Settings'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Shop Branding */}
+        <div className="card-playful animate-slide-up" style={{ animationDelay: '238ms' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <Store className="h-5 w-5 text-primary" />
+            <div>
+              <Label className="font-bold text-sm">Shop Branding</Label>
+              <p className="text-xs text-muted-foreground">Customize how your /shop page looks</p>
+            </div>
+          </div>
+
+          {/* Live preview */}
+          <div
+            className="rounded-2xl p-4 mb-3 text-white shadow-inner overflow-hidden relative"
+            style={{
+              background: shopBannerUrl
+                ? `linear-gradient(135deg, ${shopHeaderColor}dd, ${shopAccentColor}dd), url(${shopBannerUrl}) center/cover`
+                : `linear-gradient(135deg, ${shopHeaderColor}, ${shopAccentColor})`,
+            }}
+          >
+            <div className="flex items-center gap-2">
+              {shopLogoUrl ? (
+                <img src={shopLogoUrl} alt="logo" className="h-10 w-10 rounded-xl bg-white/25 p-0.5" />
+              ) : (
+                <div className="h-10 w-10 rounded-xl bg-white/25 flex items-center justify-center text-lg">🍦</div>
+              )}
+              <div>
+                <p className="text-sm font-black leading-tight">{shopName || 'Shop name'}</p>
+                <p className="text-[10px] italic opacity-90">{shopTagline || 'Tagline'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs font-semibold">Shop name</Label>
+              <Input value={shopName} onChange={e => setShopName(e.target.value)} maxLength={60} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Tagline</Label>
+              <Input value={shopTagline} onChange={e => setShopTagline(e.target.value)} maxLength={80} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Logo image URL</Label>
+              <Input value={shopLogoUrl} onChange={e => setShopLogoUrl(e.target.value)} placeholder="https://…/logo.png" className="mt-1" />
+              <p className="text-[10px] text-muted-foreground mt-1">Leave blank to use your app logo</p>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Banner background image URL</Label>
+              <Input value={shopBannerUrl} onChange={e => setShopBannerUrl(e.target.value)} placeholder="https://…/banner.jpg" className="mt-1" />
+              <p className="text-[10px] text-muted-foreground mt-1">Optional — sits behind the header colors</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs font-semibold">Header color</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <input type="color" value={shopHeaderColor} onChange={e => setShopHeaderColor(e.target.value)} className="h-9 w-12 rounded cursor-pointer border" />
+                  <Input value={shopHeaderColor} onChange={e => setShopHeaderColor(e.target.value)} className="flex-1 text-xs font-mono" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Accent color</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <input type="color" value={shopAccentColor} onChange={e => setShopAccentColor(e.target.value)} className="h-9 w-12 rounded cursor-pointer border" />
+                  <Input value={shopAccentColor} onChange={e => setShopAccentColor(e.target.value)} className="flex-1 text-xs font-mono" />
+                </div>
+              </div>
+            </div>
+            <Button
+              onClick={saveBranding}
+              disabled={savingBrand}
+              size="sm"
+              className="gradient-berry text-primary-foreground rounded-full w-full"
+            >
+              {savingBrand ? 'Saving…' : 'Save Branding'}
             </Button>
           </div>
         </div>

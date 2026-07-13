@@ -12,6 +12,12 @@ interface Settings {
   whatsappNumber: string;
   shopEnabled: boolean;
   shopDeliveryFee: number;
+  shopName: string;
+  shopTagline: string;
+  shopHeaderColor: string;
+  shopAccentColor: string;
+  shopBannerUrl: string;
+  shopLogoUrl: string;
 }
 
 interface SettingsContextType {
@@ -48,6 +54,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     whatsappNumber: '23275266940',
     shopEnabled: true,
     shopDeliveryFee: 0,
+    shopName: 'GULP by Andrea',
+    shopTagline: 'Sip. Smile. Repeat.',
+    shopHeaderColor: '#ec4899',
+    shopAccentColor: '#db2777',
+    shopBannerUrl: '',
+    shopLogoUrl: '',
   });
   const [loading, setLoading] = useState(true);
   const [pinLocked, setPinLocked] = useState(false);
@@ -66,6 +78,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           whatsappNumber: (data as any).whatsapp_number ?? '23275266940',
           shopEnabled: (data as any).shop_enabled ?? true,
           shopDeliveryFee: Number((data as any).shop_delivery_fee) || 0,
+          shopName: (data as any).shop_name ?? 'GULP by Andrea',
+          shopTagline: (data as any).shop_tagline ?? 'Sip. Smile. Repeat.',
+          shopHeaderColor: (data as any).shop_header_color ?? '#ec4899',
+          shopAccentColor: (data as any).shop_accent_color ?? '#db2777',
+          shopBannerUrl: (data as any).shop_banner_url ?? '',
+          shopLogoUrl: (data as any).shop_logo_url ?? '',
         });
         if (data.pin_hash) setPinLocked(true);
       }
@@ -99,6 +117,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (updates.whatsappNumber !== undefined) dbUpdates.whatsapp_number = updates.whatsappNumber;
     if (updates.shopEnabled !== undefined) dbUpdates.shop_enabled = updates.shopEnabled;
     if (updates.shopDeliveryFee !== undefined) dbUpdates.shop_delivery_fee = updates.shopDeliveryFee;
+    if (updates.shopName !== undefined) dbUpdates.shop_name = updates.shopName;
+    if (updates.shopTagline !== undefined) dbUpdates.shop_tagline = updates.shopTagline;
+    if (updates.shopHeaderColor !== undefined) dbUpdates.shop_header_color = updates.shopHeaderColor;
+    if (updates.shopAccentColor !== undefined) dbUpdates.shop_accent_color = updates.shopAccentColor;
+    if (updates.shopBannerUrl !== undefined) dbUpdates.shop_banner_url = updates.shopBannerUrl;
+    if (updates.shopLogoUrl !== undefined) dbUpdates.shop_logo_url = updates.shopLogoUrl;
     await supabase.from('user_settings').update(dbUpdates).eq('user_id', user.id);
     setSettings(prev => ({ ...prev, ...updates }));
   }, [user, ensureRow]);
