@@ -614,7 +614,7 @@ export default function OrdersPage() {
                         </button>
                       }
                     />
-                    <button onClick={() => updateOrderStatus(order.id, 'completed')} className="h-8 w-8 rounded-full bg-success/20 text-success flex items-center justify-center hover:bg-success/30 hover:scale-110 transition-all"><Check className="h-4 w-4" /></button>
+                    <button onClick={() => { updateOrderStatus(order.id, 'completed'); sendStatusWhatsApp(order, 'completed', settings.shopName); }} className="h-8 w-8 rounded-full bg-success/20 text-success flex items-center justify-center hover:bg-success/30 hover:scale-110 transition-all" title="Mark completed & notify customer"><Check className="h-4 w-4" /></button>
                     <button onClick={() => updateOrderStatus(order.id, 'cancelled')} className="h-8 w-8 rounded-full bg-destructive/20 text-destructive flex items-center justify-center hover:bg-destructive/30 hover:scale-110 transition-all"><X className="h-4 w-4" /></button>
                   </>
                 )}
