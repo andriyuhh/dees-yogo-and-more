@@ -239,8 +239,14 @@ export type Database = {
           invoice_payment_terms: string
           last_backup_reminder: string | null
           pin_hash: string | null
+          shop_accent_color: string
+          shop_banner_url: string | null
           shop_delivery_fee: number
           shop_enabled: boolean
+          shop_header_color: string
+          shop_logo_url: string | null
+          shop_name: string
+          shop_tagline: string
           updated_at: string
           user_id: string
           whatsapp_number: string
@@ -254,8 +260,14 @@ export type Database = {
           invoice_payment_terms?: string
           last_backup_reminder?: string | null
           pin_hash?: string | null
+          shop_accent_color?: string
+          shop_banner_url?: string | null
           shop_delivery_fee?: number
           shop_enabled?: boolean
+          shop_header_color?: string
+          shop_logo_url?: string | null
+          shop_name?: string
+          shop_tagline?: string
           updated_at?: string
           user_id: string
           whatsapp_number?: string
@@ -269,8 +281,14 @@ export type Database = {
           invoice_payment_terms?: string
           last_backup_reminder?: string | null
           pin_hash?: string | null
+          shop_accent_color?: string
+          shop_banner_url?: string | null
           shop_delivery_fee?: number
           shop_enabled?: boolean
+          shop_header_color?: string
+          shop_logo_url?: string | null
+          shop_name?: string
+          shop_tagline?: string
           updated_at?: string
           user_id?: string
           whatsapp_number?: string
