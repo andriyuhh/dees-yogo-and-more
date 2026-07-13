@@ -349,7 +349,84 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <AlertDialog open={resetOpen} onOpenChange={(o) => { setResetOpen(o); if (!o) setConfirmText(''); }}>
+        {/* Shop Branding */}
+        <div className="card-playful animate-slide-up" style={{ animationDelay: '238ms' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <Store className="h-5 w-5 text-primary" />
+            <div>
+              <Label className="font-bold text-sm">Shop Branding</Label>
+              <p className="text-xs text-muted-foreground">Customize how your /shop page looks</p>
+            </div>
+          </div>
+
+          {/* Live preview */}
+          <div
+            className="rounded-2xl p-4 mb-3 text-white shadow-inner overflow-hidden relative"
+            style={{
+              background: shopBannerUrl
+                ? `linear-gradient(135deg, ${shopHeaderColor}dd, ${shopAccentColor}dd), url(${shopBannerUrl}) center/cover`
+                : `linear-gradient(135deg, ${shopHeaderColor}, ${shopAccentColor})`,
+            }}
+          >
+            <div className="flex items-center gap-2">
+              {shopLogoUrl ? (
+                <img src={shopLogoUrl} alt="logo" className="h-10 w-10 rounded-xl bg-white/25 p-0.5" />
+              ) : (
+                <div className="h-10 w-10 rounded-xl bg-white/25 flex items-center justify-center text-lg">🍦</div>
+              )}
+              <div>
+                <p className="text-sm font-black leading-tight">{shopName || 'Shop name'}</p>
+                <p className="text-[10px] italic opacity-90">{shopTagline || 'Tagline'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs font-semibold">Shop name</Label>
+              <Input value={shopName} onChange={e => setShopName(e.target.value)} maxLength={60} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Tagline</Label>
+              <Input value={shopTagline} onChange={e => setShopTagline(e.target.value)} maxLength={80} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Logo image URL</Label>
+              <Input value={shopLogoUrl} onChange={e => setShopLogoUrl(e.target.value)} placeholder="https://…/logo.png" className="mt-1" />
+              <p className="text-[10px] text-muted-foreground mt-1">Leave blank to use your app logo</p>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Banner background image URL</Label>
+              <Input value={shopBannerUrl} onChange={e => setShopBannerUrl(e.target.value)} placeholder="https://…/banner.jpg" className="mt-1" />
+              <p className="text-[10px] text-muted-foreground mt-1">Optional — sits behind the header colors</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs font-semibold">Header color</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <input type="color" value={shopHeaderColor} onChange={e => setShopHeaderColor(e.target.value)} className="h-9 w-12 rounded cursor-pointer border" />
+                  <Input value={shopHeaderColor} onChange={e => setShopHeaderColor(e.target.value)} className="flex-1 text-xs font-mono" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Accent color</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <input type="color" value={shopAccentColor} onChange={e => setShopAccentColor(e.target.value)} className="h-9 w-12 rounded cursor-pointer border" />
+                  <Input value={shopAccentColor} onChange={e => setShopAccentColor(e.target.value)} className="flex-1 text-xs font-mono" />
+                </div>
+              </div>
+            </div>
+            <Button
+              onClick={saveBranding}
+              disabled={savingBrand}
+              size="sm"
+              className="gradient-berry text-primary-foreground rounded-full w-full"
+            >
+              {savingBrand ? 'Saving…' : 'Save Branding'}
+            </Button>
+          </div>
+        </div>
+
           <AlertDialogTrigger asChild>
             <button className="card-playful w-full text-left flex items-center gap-3 animate-slide-up border border-destructive/30" style={{ animationDelay: '240ms' }}>
               <Trash2 className="h-5 w-5 text-destructive" />
