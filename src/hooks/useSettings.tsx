@@ -12,6 +12,12 @@ interface Settings {
   whatsappNumber: string;
   shopEnabled: boolean;
   shopDeliveryFee: number;
+  shopName: string;
+  shopTagline: string;
+  shopHeaderColor: string;
+  shopAccentColor: string;
+  shopBannerUrl: string;
+  shopLogoUrl: string;
 }
 
 interface SettingsContextType {
