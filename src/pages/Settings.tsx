@@ -57,7 +57,32 @@ export default function SettingsPage() {
   useEffect(() => {
     setWaNumber(settings.whatsappNumber);
     setShopFee(String(settings.shopDeliveryFee));
-  }, [settings.whatsappNumber, settings.shopDeliveryFee]);
+    setShopName(settings.shopName);
+    setShopTagline(settings.shopTagline);
+    setShopHeaderColor(settings.shopHeaderColor);
+    setShopAccentColor(settings.shopAccentColor);
+    setShopBannerUrl(settings.shopBannerUrl);
+    setShopLogoUrl(settings.shopLogoUrl);
+  }, [settings.whatsappNumber, settings.shopDeliveryFee, settings.shopName, settings.shopTagline, settings.shopHeaderColor, settings.shopAccentColor, settings.shopBannerUrl, settings.shopLogoUrl]);
+
+  const saveBranding = async () => {
+    setSavingBrand(true);
+    try {
+      await updateSettings({
+        shopName: shopName.trim() || 'GULP by Andrea',
+        shopTagline: shopTagline.trim() || 'Sip. Smile. Repeat.',
+        shopHeaderColor: shopHeaderColor || '#ec4899',
+        shopAccentColor: shopAccentColor || '#db2777',
+        shopBannerUrl: shopBannerUrl.trim(),
+        shopLogoUrl: shopLogoUrl.trim(),
+      });
+      toast.success('Shop branding saved ✨');
+    } catch {
+      toast.error('Could not save');
+    } finally {
+      setSavingBrand(false);
+    }
+  };
 
   const saveShopSettings = async () => {
     setSavingShop(true);
