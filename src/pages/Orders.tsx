@@ -438,6 +438,18 @@ async function shareInvoicePDF(order: Order, invoiceOpts?: { paymentTerms?: stri
   }
 }
 
+function sendStatusWhatsApp(order: Order, kind: 'paid' | 'completed', businessName = 'GULP by Andrea') {
+  const phone = order.customerPhone.replace(/[^0-9+]/g, '');
+  if (!phone) return;
+  const orderId = order.id.slice(0, 8).toUpperCase();
+  const total = `Le ${order.totalAmount.toLocaleString()}`;
+  const items = order.items.map(i => `• ${i.quantity}x ${i.flavorName}`).join('\n');
+  const msg = kind === 'paid'
+    ? `Hi ${order.customerName.split(' ')[0]}! ✅\n\nWe've received your payment of *${total}* for order *#${orderId}*.\n\n${items}\n\nThank you for choosing *${businessName}*! We'll let you know as soon as it's ready. 🍦`
+    : `Hi ${order.customerName.split(' ')[0]}! 🎉\n\nYour order *#${orderId}* is ready / on its way!\n\n${items}\n\nTotal: *${total}*\n\nThank you for ordering from *${businessName}* — sip, smile, repeat! 💜`;
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
 export default function OrdersPage() {
   const { orders, addOrder, updateOrder, deleteOrder, updateOrderStatus, loading } = useYogurtStore();
   const { settings } = useSettings();
