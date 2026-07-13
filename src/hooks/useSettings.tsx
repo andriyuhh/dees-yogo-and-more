@@ -54,6 +54,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     whatsappNumber: '23275266940',
     shopEnabled: true,
     shopDeliveryFee: 0,
+    shopName: 'GULP by Andrea',
+    shopTagline: 'Sip. Smile. Repeat.',
+    shopHeaderColor: '#ec4899',
+    shopAccentColor: '#db2777',
+    shopBannerUrl: '',
+    shopLogoUrl: '',
   });
   const [loading, setLoading] = useState(true);
   const [pinLocked, setPinLocked] = useState(false);
@@ -72,6 +78,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           whatsappNumber: (data as any).whatsapp_number ?? '23275266940',
           shopEnabled: (data as any).shop_enabled ?? true,
           shopDeliveryFee: Number((data as any).shop_delivery_fee) || 0,
+          shopName: (data as any).shop_name ?? 'GULP by Andrea',
+          shopTagline: (data as any).shop_tagline ?? 'Sip. Smile. Repeat.',
+          shopHeaderColor: (data as any).shop_header_color ?? '#ec4899',
+          shopAccentColor: (data as any).shop_accent_color ?? '#db2777',
+          shopBannerUrl: (data as any).shop_banner_url ?? '',
+          shopLogoUrl: (data as any).shop_logo_url ?? '',
         });
         if (data.pin_hash) setPinLocked(true);
       }
