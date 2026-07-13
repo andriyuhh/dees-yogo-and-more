@@ -29,6 +29,13 @@ export default function SettingsPage() {
   const [waNumber, setWaNumber] = useState(settings.whatsappNumber);
   const [shopFee, setShopFee] = useState(String(settings.shopDeliveryFee));
   const [savingShop, setSavingShop] = useState(false);
+  const [shopName, setShopName] = useState(settings.shopName);
+  const [shopTagline, setShopTagline] = useState(settings.shopTagline);
+  const [shopHeaderColor, setShopHeaderColor] = useState(settings.shopHeaderColor);
+  const [shopAccentColor, setShopAccentColor] = useState(settings.shopAccentColor);
+  const [shopBannerUrl, setShopBannerUrl] = useState(settings.shopBannerUrl);
+  const [shopLogoUrl, setShopLogoUrl] = useState(settings.shopLogoUrl);
+  const [savingBrand, setSavingBrand] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [resetOpts, setResetOpts] = useState({
