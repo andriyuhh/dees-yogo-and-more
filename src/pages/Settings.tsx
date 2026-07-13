@@ -427,6 +427,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        <AlertDialog open={resetOpen} onOpenChange={(o) => { setResetOpen(o); if (!o) setConfirmText(''); }}>
           <AlertDialogTrigger asChild>
             <button className="card-playful w-full text-left flex items-center gap-3 animate-slide-up border border-destructive/30" style={{ animationDelay: '240ms' }}>
               <Trash2 className="h-5 w-5 text-destructive" />
