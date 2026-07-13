@@ -117,6 +117,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (updates.whatsappNumber !== undefined) dbUpdates.whatsapp_number = updates.whatsappNumber;
     if (updates.shopEnabled !== undefined) dbUpdates.shop_enabled = updates.shopEnabled;
     if (updates.shopDeliveryFee !== undefined) dbUpdates.shop_delivery_fee = updates.shopDeliveryFee;
+    if (updates.shopName !== undefined) dbUpdates.shop_name = updates.shopName;
+    if (updates.shopTagline !== undefined) dbUpdates.shop_tagline = updates.shopTagline;
+    if (updates.shopHeaderColor !== undefined) dbUpdates.shop_header_color = updates.shopHeaderColor;
+    if (updates.shopAccentColor !== undefined) dbUpdates.shop_accent_color = updates.shopAccentColor;
+    if (updates.shopBannerUrl !== undefined) dbUpdates.shop_banner_url = updates.shopBannerUrl;
+    if (updates.shopLogoUrl !== undefined) dbUpdates.shop_logo_url = updates.shopLogoUrl;
     await supabase.from('user_settings').update(dbUpdates).eq('user_id', user.id);
     setSettings(prev => ({ ...prev, ...updates }));
   }, [user, ensureRow]);
